@@ -40,6 +40,18 @@ export default {
     const params = { user_id, bar_code };
 
     return axios.get(url, { params });
+  },
+  getFileList: (pin_proxy, params) => {
+    const url = pin_proxy + api.GET_FILE_LIST;
+    // const params = { access_token, uuid, path };
+
+    return axios.get(url, { params })
+  },
+  // 创建爱你文件夹
+  createFolder(pin_proxy, params) {
+    const url = pin_proxy + api.CREAT_FOLDER;
+
+    return axios.get(url, { params });
   }
 }
 

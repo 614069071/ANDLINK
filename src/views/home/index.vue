@@ -8,48 +8,80 @@
 			<div class="header-center">我的云盘</div>
 			<div class="header-right">
 				<label><input type="file" hidden @change="uploadFile($event)" />上传</label>
-				<span>新建</span>
+				<span @click="createVisible = true">新建</span>
 			</div>
 		</header>
 
 		<main class="main-wrapper">
-			<div class="crumbs-wrapper">全部磁盘>sda1</div>
+			<div class="crumbs-wrapper">
+				<span v-for="(item,index) in breadcrumbList" :key="index" @click="crumbsChange(item,index)">{{index ? '>' :''}}{{item.name.split('/').pop()}}</span>
+			</div>
 
 			<!-- 文件列表 -->
 			<div class="file-list-wrapper">
 				<ul>
-					<li class="file-item-wrapper" v-for="item in 20" :key="item">
-						<label class="file-check">
-							<input type="checkbox" :value="item" v-model="list" />
-						</label>
+					<template v-for="item in filelist">
+						<!-- 文件夹 -->
+						<template v-if="item.is_dir">
+							<li class="file-item-wrapper" :key="item.create_time">
+								<label class="file-check">
+									<input type="checkbox" :value="item" v-model="checklist" />
+								</label>
 
-						<div class="file-info">
-							<template v-if="item % 2">
-								<div class="file-info-img">
-									<img src="../../assets/logo.png" alt="" />
+								<div class="file-info" @click="getFileList(item)">
+									<div class="file-info-img">
+										<img src="../../assets/folder.png" alt="" />
+									</div>
+									<div class="folder-info-main">
+										<p class="folder-info-title ellipsis">{{item.path.split('/').pop()}}</p>
+										<p class="folder-info-des">{{item.name}}</p>
+									</div>
 								</div>
 
+								<div class="file-control">重命名</div>
+							</li>
+						</template>
+
+						<!-- 磁盘 -->
+						<template v-else-if="item.type === 'usb' || item.type === 'data'">
+							<li class="file-item-wrapper" :key="item.create_time" @click="getFileList(item)">
+								<div class="file-info-img">
+									<img src="../../assets/disk.png" alt="">
+								</div>
 								<div class="file-info-main">
-									<p class="file-info-title ellipsis">test.jpg</p>
-									<p class="file-info-des"><span>4.08KB</span>2021-02-0417:34:50<span></span></p>
+									<p class="folder-info-title ellipsis">{{item.name}}</p>
+									<p class="folder-info-des">{{(item.total_space - item.free_space) | toBety}}/{{item.total_space | toBety}}</p>
 								</div>
-							</template>
+							</li>
+						</template>
 
-							<template v-else>
-								<div class="file-info-img">
-									<img src="../../assets/folder.png" alt="" />
+						<!-- 文件 -->
+						<template v-else>
+							<li class="file-item-wrapper" :key="item.create_time">
+								<label class="file-check">
+									<input type="checkbox" :value="item" v-model="checklist" />
+								</label>
+
+								<div class="file-info">
+									<div class="file-info-img">
+										<img :src="item | dePath" alt="" />
+									</div>
+
+									<div class="file-info-main">
+										<p class="file-info-title ellipsis">test.jpg</p>
+										<p class="file-info-des"><span>4.08KB</span>2021-02-0417:34:50<span></span></p>
+									</div>
 								</div>
-								<div class="folder-info-main">
-									<p class="folder-info-title ellipsis">test</p>
-									<p class="folder-info-des">2021-02-0417:34:50</p>
-								</div>
-							</template>
+								<div class="file-control">重命名</div>
+							</li>
+						</template>
 
-						</div>
-
-						<div class="file-control">重命名</div>
-					</li>
+					</template>
 				</ul>
+			</div>
+
+			<div class="node-data-wrapper" v-show="!filelist.length">
+				暂无数据
 			</div>
 		</main>
 
@@ -58,6 +90,17 @@
 			<span>下载</span>
 			<span @click="$router.push('/upload')">任务</span>
 		</footer>
+
+		<div class="dialog-wrapper" @click.stop v-show="createVisible">
+			<div class="dialog-inner-wrapper">
+				<p>创建文件夹</p>
+				<input type="text" v-model="createFolderVal" placeholder="请输入文件夹名字">
+				<div class="dialog-inner-btns">
+					<button class="create-cancel" @click="createFolderCancel">取消</button>
+					<button class="create-submit" @click="createFolderSubmit">确定</button>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -69,12 +112,16 @@ export default {
 	name: 'Home',
 	data() {
 		return {
-			list: [],
+			checklist: [],
+			filelist: [],
+			breadcrumbList: [{ uuid: '', name: '全部磁盘' }],
+			createVisible: false,
+			createFolderVal: '',
 		};
 	},
 	created() {
 		const phone = '13444444444';
-		const pinCode = '44444444444';
+		const pinCode = '22222222222';
 
 		this.getDeviceInfo(pinCode, phone);
 
@@ -132,9 +179,9 @@ export default {
 						this.$axios
 							.getToken(pin_proxy, cookie)
 							.then((token_res) => {
-								utils.storage.set('accessToken', token_res.access_token);
+								utils.storage.set('access_token', token_res.access_token);
 								if (code == 0) {
-									this.getDiskData(pin_proxy, token_res.access_token);
+									this.getDiskData();
 								} else if (code == 5018) {
 									// 普通用户绑定
 									phone_res.is_bind_admin &&
@@ -149,10 +196,7 @@ export default {
 														.then((device_res) => {
 															// console.log(device_res);
 															if (device_res.code == 0) {
-																this.getDiskData(
-																	pin_proxy,
-																	token_res.access_token
-																);
+																this.getDiskData();
 															} else if (device_res.code == 5006) {
 																this.$axios.bindDevice(
 																	pin_proxy,
@@ -184,11 +228,81 @@ export default {
 				});
 		},
 		// 获取磁盘信息
-		getDiskData(pin_proxy, access_token) {
-			this.$axios.getDiskData(pin_proxy, access_token).then((disk_res) => {
+		getDiskData() {
+			const pin_proxy = utils.storage.get('pin_proxy');
+			const access_token = utils.storage.get('access_token');
+			this.$axios.getDiskData(pin_proxy, access_token).then((res) => {
+				this.filelist = res.disks || [];
 				// 渲染页面
-				console.log('getDiskData', disk_res);
+				console.log('getDiskData', res);
 			});
+		},
+		// 获取文件列表
+		getFileList(item) {
+			console.log(item, 'item');
+			const { uuid, path = '/', name = path.slice(1) || '' } = item;
+			const pin_proxy = utils.storage.get('pin_proxy');
+			const access_token = utils.storage.get('access_token');
+			const params = { access_token, uuid, path };
+			// 磁盘路径导航
+			const crumb = { uuid, path, name };
+			this.breadcrumbList.push(crumb);
+
+			this.$axios
+				.getFileList(pin_proxy, params)
+				.then((res) => {
+					this.filelist = res.contents;
+				})
+				.catch((err) => {
+					console.log(err);
+				});
+		},
+		crumbsChange(item, index) {
+			if (this.breadcrumbList.length === index + 1) return;
+
+			console.log(index, 'index');
+
+			if (index) {
+				this.breadcrumbList.splice(index);
+			}
+
+			console.log(this.breadcrumbList, 'arr');
+
+			// this.breadcrumbList = arr;
+
+			if (item.uuid) {
+				this.getFileList(item);
+			} else {
+				this.getDiskData();
+			}
+		},
+		createFolderCancel() {
+			this.createVisible = false;
+		},
+		createFolderSubmit() {
+			const path = this.createFolderVal;
+			if (!path) return;
+			this.createFolder(`/${path}`);
+			this.createFolderVal = '';
+			this.createVisible = false;
+		},
+		//创建文件夹
+		createFolder(path) {
+			const pin_proxy = utils.storage.get('pin_proxy');
+			const access_token = utils.storage.get('access_token');
+			const device_info = utils.getClientDeviceInfo();
+			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
+			const { uuid = '' } = item;
+			const params = { access_token, uuid, path, device_info };
+
+			this.$axios
+				.createFolder(pin_proxy, params)
+				.then((res) => {
+					this.getFileList(item);
+				})
+				.catch((err) => {
+					console.log(err);
+				});
 		},
 	},
 };
@@ -330,5 +444,71 @@ export default {
 	line-height: 0.64rem;
 	text-align: center;
 	color: #bbb;
+}
+
+.node-data-wrapper {
+	text-align: center;
+	height: 2rem;
+	line-height: 2rem;
+	color: #ccc;
+}
+
+.dialog-wrapper {
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	left: 0;
+	top: 0;
+	background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dialog-inner-wrapper {
+	width: 4.8rem;
+	background-color: #fff;
+	position: absolute;
+	left: 50%;
+	top: 30%;
+	transform: translateX(-50%);
+	border-radius: 0.1rem;
+	padding: 0 0.6rem 0.4rem;
+}
+
+.dialog-inner-wrapper p {
+	height: 1rem;
+	line-height: 1rem;
+	font-size: 0.32rem;
+}
+
+.dialog-inner-wrapper input {
+	box-sizing: border-box;
+	width: 100%;
+	height: 0.7rem;
+	margin: 0.4rem 0 0.6rem 0;
+	border-radius: 0.1rem;
+	padding-left: 0.2rem;
+}
+
+.dialog-inner-wrapper button {
+	height: 0.7rem;
+	line-height: 0.7rem;
+	padding: 0 0.4rem;
+	border: 1px solid #ccc;
+	border-radius: 0.1rem;
+}
+
+.dialog-inner-wrapper .dialog-inner-btns {
+	text-align: right;
+}
+
+.dialog-inner-wrapper button.create-cancel {
+	border: 1px solid #ccc;
+	background-color: #fff;
+}
+
+.dialog-inner-wrapper button.create-submit {
+	border: 1px solid #00a2f4;
+	background-color: #00a2f4;
+	color: #fff;
+	margin-left: 0.4rem;
 }
 </style>
