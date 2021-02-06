@@ -47,11 +47,15 @@ export default {
 
     return axios.get(url, { params })
   },
-  // 创建爱你文件夹
+  // 创建文件夹
   createFolder(pin_proxy, params) {
     const url = pin_proxy + api.CREAT_FOLDER;
 
     return axios.get(url, { params });
+  },
+  // 批量删除
+  deleteBranch() {
+
   }
 }
 

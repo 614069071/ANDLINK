@@ -86,7 +86,7 @@
 		</main>
 
 		<footer class="footer-wrapper">
-			<span>删除</span>
+			<span @click="deleteBranchClick">删除</span>
 			<span>下载</span>
 			<span @click="$router.push('/upload')">任务</span>
 		</footer>
@@ -114,12 +114,16 @@ export default {
 		return {
 			checklist: [],
 			filelist: [],
-			breadcrumbList: [{ uuid: '', name: '全部磁盘' }],
+			breadcrumbList: [],
 			createVisible: false,
 			createFolderVal: '',
 		};
 	},
 	created() {
+		const item = { uuid: '', name: '全部磁盘' };
+
+		this.breadcrumbList.push(item);
+
 		const phone = '13444444444';
 		const pinCode = '22222222222';
 
@@ -299,6 +303,16 @@ export default {
 				.createFolder(pin_proxy, params)
 				.then(() => {
 					this.getFileList(item);
+				})
+				.catch((err) => {
+					console.log(err);
+				});
+		},
+		deleteBranchClick() {
+			this.$axios
+				.deleteBranch()
+				.then((res) => {
+					console.log(res);
 				})
 				.catch((err) => {
 					console.log(err);
