@@ -1,0 +1,13 @@
+:root {
+  --default-color: #409eff;
+  --second-color: #ecf5ff;
+  --font-color: #606266;
+  --font-color-3: #333;
+}
+
+/* 单行溢出隐藏 */
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
