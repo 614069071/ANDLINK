@@ -5,7 +5,6 @@ import axios from "axios";
 // }, err => Promise.reject(err));
 
 axios.interceptors.response.use(response => {
-  console.log(response, 'response')
   return response.data;
 }, err => {
   return Promise.reject(err);

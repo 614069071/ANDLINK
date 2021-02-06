@@ -1,11 +1,8 @@
 import axios from './axios';
-// import api from './api';
+import api from './api';
 const IS_PHONE_BIND = 'http://rapi.filedisk.info/c/checkPhoneInfo';
 const NORMAL_USER_BIND =
   'https://gr-share.com/c/normalUserBindDeviceH5';
-const GET_TOKEN = '/getToken';
-const GET_STORAGE_LIST = '/getStorages';
-const BIND_DEVICE = '/bindDevice';
 // let deviceUrl = '';
 
 export default {
@@ -26,10 +23,10 @@ export default {
 
     console.log(123)
 
-    return axios.get(pin_proxy + GET_TOKEN, { params })
+    return axios.get(pin_proxy + api.GET_TOKEN, { params })
   },
   getDiskData: (pin_proxy, access_token) => {
-    const url = `${pin_proxy}${GET_STORAGE_LIST}`;
+    const url = `${pin_proxy}${api.GET_STORAGE_LIST}`;
     const params = { access_token };
 
     return axios.get(url, { params });
@@ -39,7 +36,7 @@ export default {
     return axios.post(NORMAL_USER_BIND, data);
   },
   bindDevice: (pin_proxy, user_id, bar_code) => {
-    const url = pin_proxy + BIND_DEVICE;
+    const url = pin_proxy + api.BIND_DEVICE;
     const params = { user_id, bar_code };
 
     return axios.get(url, { params });

@@ -153,8 +153,12 @@ export default {
 																	pin_proxy,
 																	token_res.access_token
 																);
-															} else if (data.code == 5006) {
-																this.$axios.bindDevice();
+															} else if (device_res.code == 5006) {
+																this.$axios.bindDevice(
+																	pin_proxy,
+																	phone_res.id,
+																	bar_code
+																);
 															} else {
 																console.log(device_res.code);
 															}
@@ -167,7 +171,7 @@ export default {
 												console.log(err);
 											});
 								} else {
-									errorTips(data.code);
+									console.log(token_res.code);
 								}
 							})
 							.catch((err) => {
