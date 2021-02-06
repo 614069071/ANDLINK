@@ -46,7 +46,7 @@ function browserVersion() {
     chrome = ua.match(/Chrome\/([\d.]+)/) ||
       ua.match(/CriOS\/([\d.]+)/),
 
-    ie = ua.match(/MSIE\s([\d\.]+)/) ||
+    ie = ua.match(/MSIE\s([\d.]+)/) ||
       ua.match(/(?:trident)(?:.*rv:([\w.]+))?/i),
     firefox = ua.match(/Firefox\/([\d.]+)/),
     safari = ua.match(/Safari\/([\d.]+)/),

@@ -297,7 +297,7 @@ export default {
 
 			this.$axios
 				.createFolder(pin_proxy, params)
-				.then((res) => {
+				.then(() => {
 					this.getFileList(item);
 				})
 				.catch((err) => {
