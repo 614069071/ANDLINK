@@ -85,7 +85,7 @@
 
 		<footer class="footer-wrapper">
 			<span @click="deleteBranchClick">删除</span>
-			<span>下载</span>
+			<span @click="downloadFiles">下载</span>
 			<span @click="$router.push('/upload')">任务</span>
 		</footer>
 
@@ -143,7 +143,7 @@ export default {
 		return {
 			checklist: [],
 			filelist: [],
-			breadcrumbList: [],
+			breadcrumbList: [{ uuid: '', name: '全部磁盘' }],
 			createVisible: false,
 			createFolderVal: '',
 			renameVisible: false,
@@ -154,10 +154,6 @@ export default {
 		};
 	},
 	created() {
-		const item = { uuid: '', name: '全部磁盘' };
-
-		this.breadcrumbList.push(item);
-
 		const phone = '18927472679';
 		const pinCode = '99999999999'; //99999999999 22222222222 44444444444
 
@@ -174,7 +170,63 @@ export default {
 		},
 		uploadFile(e) {
 			console.log(e);
-			// this.hejiaReady(this.getDeviceInfo);
+			const self = this;
+			const [file = null] = e.target.files;
+			const pin_proxy = utils.storage.get('pin_proxy');
+			const access_token = utils.storage.get('access_token');
+			const bar_code = utils.storage.get('bar_code');
+			const device_info = utils.getClientDeviceInfo();
+			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
+			const formData = new FormData();
+			formData.append('file', file);
+
+			if (file.size <= 10 * 1024 * 1024) {
+				utils.getFileHash(file, function (simple_hash) {
+					const params = {
+						access_token,
+						uuid: item.uuid,
+						path: '/' + file.name,
+						simple_hash,
+						device_flag: device_info,
+						offset: 0,
+						size: file.size,
+						over_write: 1,
+						device_info,
+					};
+
+					self.$axios
+						.uploadFile(pin_proxy, formData, params)
+						.then((res) => {
+							console.log(res, 'upload');
+
+							const params = {
+								access_token,
+								uuid: item.uuid,
+								path: '/' + file.name,
+								size: file.size,
+								hash: simple_hash,
+								simple_hash,
+								device_flag: device_info,
+								device_info: device_info,
+								bar_code,
+							};
+
+							self.$axios
+								.uploadHash(pin_proxy, params)
+								.then((res) => {
+									if (res.code == 0) {
+										self.getFileList(item);
+									}
+								})
+								.catch((err) => {
+									console.log(err);
+								});
+						})
+						.catch((err) => {
+							console.log(err);
+						});
+				});
+			}
 		},
 		hejiaReady(callback) {
 			window.Hejia.ready(function () {
@@ -211,6 +263,9 @@ export default {
 				.then((phone_res) => {
 					const { code, device = {}, cookie } = phone_res;
 					const { pin, proxy, bar_code } = device;
+
+					utils.storage.set('bar_code', bar_code);
+
 					if (code == 0 || code == 5018) {
 						const pin_proxy = `http://${pin}.${proxy}`;
 
@@ -422,6 +477,10 @@ export default {
 			const access_token = utils.storage.get('access_token');
 			const device_info = utils.getClientDeviceInfo();
 			const params = { access_token, device_info };
+			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
+
+			// const data = new FormData();
+			// data.append('paths', deleteArr);
 
 			const data = { paths: deleteArr };
 
@@ -429,10 +488,22 @@ export default {
 				.deleteBranch(pin_proxy, data, params)
 				.then((res) => {
 					console.log(res);
+					this.getFileList(item);
 				})
 				.catch((err) => {
 					console.log(err);
 				});
+		},
+		// 下载
+		downloadFiles() {
+			const item = this.checklist[0];
+			const anchor = document.createElement('a');
+			const src = utils.downloadFilePath(item);
+			anchor.href = src;
+			anchor.download = item.path.split('/').pop();
+
+			console.log(anchor);
+			anchor.click();
 		},
 	},
 };

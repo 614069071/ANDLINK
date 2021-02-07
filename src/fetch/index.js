@@ -65,6 +65,24 @@ export default {
     const url = pin_proxy + api.MOVE_FILE_OR_FOLDER;
 
     return axios.get(url, { params });
+  },
+  // 下载
+  downloadFile(pin_proxy, params) {
+    const url = pin_proxy + api.DOWNLOAD_FILE;
+
+    return axios.get(url, { params });
+  },
+  // 上传文件
+  uploadFile(pin_proxy, data, params) {
+    const url = pin_proxy + api.UPLOAD_FILE_2_PRIVATE
+
+    return axios.post(url, data, { params });
+  },
+  // 上传hash
+  uploadHash(pin_proxy, params) {
+    const url = pin_proxy + api.GET_ALL_FILE_HASH;
+
+    return axios.get(url, { params });
   }
 }
 
