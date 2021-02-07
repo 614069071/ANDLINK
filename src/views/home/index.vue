@@ -371,9 +371,6 @@ export default {
 			const newnameArr = path.split('/').slice(0, -1);
 			newnameArr.push(this.renameFolderVal);
 			const rename = newnameArr.join('/');
-			console.log(rename, 'rename');
-
-			console.log(this.renameItem, 'renameItem');
 
 			const params = {
 				access_token,
@@ -382,16 +379,17 @@ export default {
 				to_uuid: uuid,
 				to_path: rename,
 				device_info,
-				flag: 1,
-				b_cross: false,
+				flag: 0,
+				b_cross: 0,
 			};
-
-			console.log('renameFolder params', params);
 
 			this.$axios
 				.renameFileOrFolder(pin_proxy, params)
-				.then(() => {
-					this.getFileList(item);
+				.then((res) => {
+					if (res.code == 0) {
+						this.getFileList(item);
+						console.log(res.err_msg);
+					}
 				})
 				.catch((err) => {
 					console.log(err);
