@@ -518,17 +518,24 @@ export default {
 					console.log(err);
 				});
 		},
+		createAnchor(item) {
+			const anchor = document.createElement('a');
+			const href = utils.downloadFilePath(item);
+			anchor.href = href;
+			// const name = utils.getRandom() + '.' + item.path.split('.').pop();
+			const name = item.path.split('.').pop();
+			anchor.setAttribute('download', name);
+			console.log(anchor, 'item name');
+			anchor.click();
+			anchor.remove();
+			console.log(item, 'createAnchor');
+		},
 		// 下载
 		downloadFiles() {
-			const item = this.checklist[0];
-			if (!item) return;
-			const anchor = document.createElement('a');
-			const src = utils.downloadFilePath(item);
-			anchor.href = src;
-			anchor.download = item.path.split('/').pop();
-
-			console.log(anchor);
-			anchor.click();
+			console.log(123456);
+			const files = this.checklist.filter((e) => !e.is_dir);
+			console.log(files);
+			files.length && files.forEach((e) => this.createAnchor(e));
 		},
 	},
 };

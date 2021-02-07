@@ -215,6 +215,18 @@ function formatTime(nS) {
   return getNowFormatDate(mDate);
 }
 
+function getRandom() {
+  const timeStamp = new Date().getTime();
+  let returnStr = "";
+  // let range = (max ? Math.round(Math.random() * (max - min)) + min : min);
+  const arr = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  for (var i = 0; i < 10; i++) {
+    var index = Math.round(Math.random() * (arr.length - 1));
+    returnStr += arr[index];
+  }
+  return timeStamp + returnStr;
+}
+
 export default {
-  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash, dePath, formatTime
+  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash, dePath, formatTime, getRandom
 }
