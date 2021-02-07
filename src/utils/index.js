@@ -139,7 +139,7 @@ function getFileHash(file, success, error) {  //获取文件对应的hash值
       _funH.fileReader = null;
     }
     // if (_funH.status != Uploader.STATUS_PAUSE) {
-    //   error();
+    error();
     // }
   };
 

@@ -27,7 +27,7 @@
 								<input type="checkbox" :value="item" v-model="checklist" />
 							</label>
 
-							<div class="file-info" @click="getFileList(item)">
+							<div class="file-info" @click="folderClick(item)">
 								<div class="file-info-img">
 									<img src="../../assets/folder.png" alt="" />
 								</div>
@@ -43,7 +43,7 @@
 
 					<!-- 磁盘 -->
 					<template v-else-if="item.type === 'usb' || item.type === 'data'">
-						<div class="file-item-wrapper" :key="item.create_time" @click="getFileList(item)">
+						<div class="file-item-wrapper" :key="item.create_time" @click="folderClick(item)">
 							<div class="file-info-img">
 								<img src="../../assets/disk.png" alt="">
 							</div>
@@ -168,6 +168,18 @@ export default {
 		resetInfo() {
 			this.checklist = [];
 		},
+		addBread(item) {
+			const crumb = { uuid: item.uuid, path: item.path, name: item.name };
+			this.breadcrumbList.push(crumb);
+		},
+		// 添加导航
+		folderClick(item) {
+			const { uuid, path = '/', name = path.slice(1) || '' } = item;
+			const crumb = { uuid, path, name };
+			this.breadcrumbList.push(crumb);
+			this.getFileList(item);
+		},
+
 		uploadFile(e) {
 			console.log(e);
 			const self = this;
@@ -346,8 +358,8 @@ export default {
 			const access_token = utils.storage.get('access_token');
 			const params = { access_token, uuid, path };
 			// 磁盘路径导航
-			const crumb = { uuid, path, name };
-			this.breadcrumbList.push(crumb);
+			// const crumb = { uuid, path, name };
+			// this.breadcrumbList.push(crumb);
 
 			this.$axios
 				.getFileList(pin_proxy, params)
@@ -360,13 +372,7 @@ export default {
 		},
 		crumbsChange(item, index) {
 			if (this.breadcrumbList.length === index + 1) return;
-
-			console.log(index, 'index');
-
-			if (index) {
-				this.breadcrumbList.splice(index);
-			}
-
+			this.breadcrumbList.splice(index + 1);
 			console.log(this.breadcrumbList, 'arr');
 
 			// this.breadcrumbList = arr;
@@ -395,6 +401,9 @@ export default {
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
 			const { uuid = '' } = item;
 			const params = { access_token, uuid, path, device_info };
+
+			console.log(params);
+			return;
 
 			this.$axios
 				.createFolder(pin_proxy, params)
