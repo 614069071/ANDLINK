@@ -179,7 +179,6 @@ export default {
 			this.breadcrumbList.push(crumb);
 			this.getFileList(item);
 		},
-
 		uploadFile(e) {
 			console.log(e);
 			const self = this;

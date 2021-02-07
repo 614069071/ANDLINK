@@ -57,7 +57,6 @@ export default {
   deleteBranch(pin_proxy, data, params) {
     const url = pin_proxy + api.DELETE_FILE_OR_FOLDER_IN_BRANCH;
 
-
     return axios.post(url, data, { params });
   },
   // 重命名
