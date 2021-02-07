@@ -4,5 +4,6 @@ export default {
   BIND_DEVICE: '/bindDevice',
   GET_FILE_LIST: '/getFileList',
   CREAT_FOLDER: '/createFolder',
-  MOVE_FILE_OR_FOLDER: '/moveFileOrFolder'
+  MOVE_FILE_OR_FOLDER: '/moveFileOrFolder',
+  DELETE_FILE_OR_FOLDER_IN_BRANCH: '/deleteFileOrFolderInBatch'
 };

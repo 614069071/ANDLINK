@@ -54,8 +54,11 @@ export default {
     return axios.get(url, { params });
   },
   // 批量删除
-  deleteBranch() {
+  deleteBranch(pin_proxy, data, params) {
+    const url = pin_proxy + api.DELETE_FILE_OR_FOLDER_IN_BRANCH;
 
+
+    return axios.post(url, data, { params });
   },
   // 重命名
   renameFileOrFolder(pin_proxy, params) {

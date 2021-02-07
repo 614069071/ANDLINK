@@ -19,65 +19,63 @@
 
 			<!-- 文件列表 -->
 			<div class="file-list-wrapper">
-				<ul>
-					<template v-for="item in filelist">
-						<!-- 文件夹 -->
-						<template v-if="item.is_dir">
-							<li class="file-item-wrapper" :key="item.create_time">
-								<label class="file-check">
-									<input type="checkbox" :value="item" v-model="checklist" />
-								</label>
+				<template v-for="item in filelist">
+					<!-- 文件夹 -->
+					<template v-if="item.is_dir">
+						<div class="file-item-wrapper" :key="item.create_time">
+							<label class="file-check">
+								<input type="checkbox" :value="item" v-model="checklist" />
+							</label>
 
-								<div class="file-info" @click="getFileList(item)">
-									<div class="file-info-img">
-										<img src="../../assets/folder.png" alt="" />
-									</div>
-									<div class="folder-info-main">
-										<p class="folder-info-title ellipsis">{{item.path.split('/').pop()}}</p>
-										<p class="folder-info-des">{{item.name}}</p>
-									</div>
-								</div>
-
-								<div class="file-control" @click="renameFolderClick(item)">重命名</div>
-							</li>
-						</template>
-
-						<!-- 磁盘 -->
-						<template v-else-if="item.type === 'usb' || item.type === 'data'">
-							<li class="file-item-wrapper" :key="item.create_time" @click="getFileList(item)">
+							<div class="file-info" @click="getFileList(item)">
 								<div class="file-info-img">
-									<img src="../../assets/disk.png" alt="">
+									<img src="../../assets/folder.png" alt="" />
 								</div>
-								<div class="file-info-main">
-									<p class="folder-info-title ellipsis">{{item.name}}</p>
-									<p class="folder-info-des">{{(item.total_space - item.free_space) | toBety}}/{{item.total_space | toBety}}</p>
+								<div class="folder-info-main">
+									<p class="folder-info-title ellipsis">{{item.path.split('/').pop()}}</p>
+									<p class="folder-info-des">{{item.name}}</p>
 								</div>
-							</li>
-						</template>
+							</div>
 
-						<!-- 文件 -->
-						<template v-else>
-							<li class="file-item-wrapper" :key="item.create_time">
-								<label class="file-check">
-									<input type="checkbox" :value="item" v-model="checklist" />
-								</label>
-
-								<div class="file-info">
-									<div class="file-info-img">
-										<img :src="item | dePath" alt="" />
-									</div>
-
-									<div class="file-info-main">
-										<p class="file-info-title ellipsis">{{item.path.split('/').pop()}}</p>
-										<p class="file-info-des"><span>4.08KB</span>2021-02-0417:34:50<span></span></p>
-									</div>
-								</div>
-								<div class="file-control" @click="renameFolderClick(item)">重命名</div>
-							</li>
-						</template>
-
+							<div class="file-control" @click="renameFolderClick(item)">重命名</div>
+						</div>
 					</template>
-				</ul>
+
+					<!-- 磁盘 -->
+					<template v-else-if="item.type === 'usb' || item.type === 'data'">
+						<div class="file-item-wrapper" :key="item.create_time" @click="getFileList(item)">
+							<div class="file-info-img">
+								<img src="../../assets/disk.png" alt="">
+							</div>
+							<div class="file-info-main">
+								<p class="folder-info-title ellipsis">{{item.name}}</p>
+								<p class="folder-info-des">{{(item.total_space - item.free_space) | toBety}}/{{item.total_space | toBety}}</p>
+							</div>
+						</div>
+					</template>
+
+					<!-- 文件 -->
+					<template v-else>
+						<div class="file-item-wrapper" :key="item.create_time">
+							<label class="file-check">
+								<input type="checkbox" :value="item" v-model="checklist" />
+							</label>
+
+							<div class="file-info">
+								<div class="file-info-img">
+									<img :src="item | dePath" alt="" />
+								</div>
+
+								<div class="file-info-main">
+									<p class="file-info-title ellipsis">{{item.path.split('/').pop()}}</p>
+									<p class="file-info-des"><span>4.08KB</span>2021-02-0417:34:50<span></span></p>
+								</div>
+							</div>
+							<div class="file-control" @click="renameFolderClick(item)">重命名</div>
+						</div>
+					</template>
+
+				</template>
 			</div>
 
 			<div class="node-data-wrapper" v-show="!filelist.length">
@@ -160,8 +158,8 @@ export default {
 
 		this.breadcrumbList.push(item);
 
-		const phone = '13444444444';
-		const pinCode = '44444444444'; //99999999999 22222222222 44444444444
+		const phone = '18927472679';
+		const pinCode = '99999999999'; //99999999999 22222222222 44444444444
 
 		this.getDeviceInfo(pinCode, phone);
 
@@ -171,6 +169,9 @@ export default {
 		console.log('mounted');
 	},
 	methods: {
+		resetInfo() {
+			this.checklist = [];
+		},
 		uploadFile(e) {
 			console.log(e);
 			// this.hejiaReady(this.getDeviceInfo);
@@ -269,6 +270,7 @@ export default {
 		},
 		// 获取磁盘信息
 		getDiskData() {
+			this.resetInfo();
 			const pin_proxy = utils.storage.get('pin_proxy');
 			const access_token = utils.storage.get('access_token');
 			this.$axios.getDiskData(pin_proxy, access_token).then((res) => {
@@ -281,6 +283,8 @@ export default {
 		},
 		// 获取文件列表
 		getFileList(item) {
+			this.resetInfo();
+
 			console.log(item, 'item');
 			const { uuid, path = '/', name = path.slice(1) || '' } = item;
 			const pin_proxy = utils.storage.get('pin_proxy');
@@ -397,34 +401,34 @@ export default {
 		},
 		//删除文件
 		deleteBranchClick() {
+			if (!this.checklist.length) return;
+
 			this.deleteVisible = true;
-			// this.$axios
-			// 	.deleteBranch()
-			// 	.then((res) => {
-			// 		console.log(res);
-			// 	})
-			// 	.catch((err) => {
-			// 		console.log(err);
-			// 	});
 		},
 		deleteFolderCancel() {
 			this.deleteVisible = false;
 		},
 		deleteFolderSubmit() {
 			this.deleteVisible = false;
+			this.deleteFolder();
 		},
-		deleteFolder(path) {
+		deleteFolder() {
+			const deleteArr = this.checklist.map((e) => ({
+				uuid: e.uuid,
+				path: e.path,
+			}));
+
 			const pin_proxy = utils.storage.get('pin_proxy');
 			const access_token = utils.storage.get('access_token');
 			const device_info = utils.getClientDeviceInfo();
-			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
-			const { uuid = '' } = item;
-			const params = { access_token, uuid, path, device_info };
+			const params = { access_token, device_info };
+
+			const data = { paths: deleteArr };
 
 			this.$axios
-				.createFolder(pin_proxy, params)
-				.then(() => {
-					this.getFileList(item);
+				.deleteBranch(pin_proxy, data, params)
+				.then((res) => {
+					console.log(res);
 				})
 				.catch((err) => {
 					console.log(err);
@@ -494,7 +498,13 @@ export default {
 }
 
 .file-list-wrapper {
+	width: 100%;
 	padding: 0 0.4rem;
+	box-sizing: border-box;
+}
+
+.file-list-wrapper > ul {
+	width: 100%;
 }
 
 .main-wrapper {
@@ -516,8 +526,11 @@ export default {
 /* 文件列表 */
 .file-item-wrapper {
 	display: flex;
+	width: 100%;
 	height: 1.44rem;
 	align-items: center;
+	box-sizing: border-box;
+	overflow: hidden;
 	border-bottom: 1px solid rgba(151, 151, 151, 0.1);
 }
 
@@ -531,6 +544,7 @@ export default {
 .file-info {
 	display: flex;
 	flex: 1;
+	overflow: hidden;
 }
 
 .file-info-img {
@@ -541,12 +555,16 @@ export default {
 
 .file-info-main {
 	display: flex;
+	flex: 1;
+	overflow: hidden;
 	flex-direction: column;
 	justify-content: space-between;
+	/* background-color: pink; */
 }
 
 .file-info-main .file-info-title,
 .folder-info-main .folder-info-title {
+	width: 100%;
 	font-size: 0.32rem;
 	flex: 1;
 }
@@ -570,6 +588,7 @@ export default {
 	line-height: 0.64rem;
 	text-align: center;
 	color: #bbb;
+	white-space: nowrap;
 }
 
 .node-data-wrapper {
