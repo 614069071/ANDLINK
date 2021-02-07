@@ -38,7 +38,7 @@
 									</div>
 								</div>
 
-								<div class="file-control">重命名</div>
+								<div class="file-control" @click="renameFolderClick(item)">重命名</div>
 							</li>
 						</template>
 
@@ -91,13 +91,44 @@
 			<span @click="$router.push('/upload')">任务</span>
 		</footer>
 
+		<!-- 创建文件夹 -->
 		<div class="dialog-wrapper" @click.stop v-show="createVisible">
 			<div class="dialog-inner-wrapper">
 				<p>创建文件夹</p>
-				<input type="text" v-model="createFolderVal" placeholder="请输入文件夹名字">
+				<div class="dialog-inner-main">
+					<input type="text" v-model="createFolderVal" placeholder="请输入文件夹名字">
+				</div>
 				<div class="dialog-inner-btns">
 					<button class="create-cancel" @click="createFolderCancel">取消</button>
 					<button class="create-submit" @click="createFolderSubmit">确定</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- 重命名 -->
+		<div class="dialog-wrapper" @click.stop v-show="renameVisible">
+			<div class="dialog-inner-wrapper">
+				<p>重命名</p>
+				<div class="dialog-inner-main">
+					<input type="text" v-model="renameFolderVal" placeholder="请输入名字">
+				</div>
+				<div class="dialog-inner-btns">
+					<button class="create-cancel" @click="renameFolderCancel">取消</button>
+					<button class="create-submit" @click="renameFolderSubmit">确定</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- 删除 -->
+		<div class="dialog-wrapper" @click.stop v-show="deleteVisible">
+			<div class="dialog-inner-wrapper">
+				<p>删除</p>
+				<div class="dialog-inner-main">
+					<div>确定要删除吗？</div>
+				</div>
+				<div class="dialog-inner-btns">
+					<button class="create-cancel" @click="deleteFolderCancel">取消</button>
+					<button class="create-submit" @click="deleteFolderSubmit">确定</button>
 				</div>
 			</div>
 		</div>
@@ -117,6 +148,11 @@ export default {
 			breadcrumbList: [],
 			createVisible: false,
 			createFolderVal: '',
+			renameVisible: false,
+			renameFolderVal: '',
+			renameItem: {},
+			deleteVisible: false,
+			deleteList: [],
 		};
 	},
 	created() {
@@ -125,7 +161,7 @@ export default {
 		this.breadcrumbList.push(item);
 
 		const phone = '13444444444';
-		const pinCode = '22222222222';
+		const pinCode = '44444444444'; //99999999999 22222222222 44444444444
 
 		this.getDeviceInfo(pinCode, phone);
 
@@ -236,7 +272,9 @@ export default {
 			const pin_proxy = utils.storage.get('pin_proxy');
 			const access_token = utils.storage.get('access_token');
 			this.$axios.getDiskData(pin_proxy, access_token).then((res) => {
-				this.filelist = res.disks || [];
+				const list = res.disks || [];
+				const arr = list.filter((e) => e.type === 'data');
+				this.filelist = arr || [];
 				// 渲染页面
 				console.log('getDiskData', res);
 			});
@@ -280,6 +318,7 @@ export default {
 				this.getDiskData();
 			}
 		},
+		//创建文件夹
 		createFolderCancel() {
 			this.createVisible = false;
 		},
@@ -290,7 +329,6 @@ export default {
 			this.createFolderVal = '';
 			this.createVisible = false;
 		},
-		//创建文件夹
 		createFolder(path) {
 			const pin_proxy = utils.storage.get('pin_proxy');
 			const access_token = utils.storage.get('access_token');
@@ -308,11 +346,73 @@ export default {
 					console.log(err);
 				});
 		},
-		deleteBranchClick() {
+		//重命名
+		renameFolderClick(item) {
+			console.log(item);
+			this.renameVisible = true;
+			this.renameItem = item;
+		},
+		renameFolderCancel() {
+			this.renameVisible = false;
+		},
+		renameFolderSubmit() {
+			const path = this.createFolderVal;
+			if (!path) return;
+			this.createFolder(`/${path}`);
+			this.renameFolderVal = '';
+			this.renameVisible = false;
+		},
+		renameFolder(path) {
+			const pin_proxy = utils.storage.get('pin_proxy');
+			const access_token = utils.storage.get('access_token');
+			const device_info = utils.getClientDeviceInfo();
+			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
+			const { uuid = '' } = item;
+			const params = { access_token, uuid, path, device_info };
+
 			this.$axios
-				.deleteBranch()
-				.then((res) => {
-					console.log(res);
+				.createFolder(pin_proxy, params)
+				.then(() => {
+					this.getFileList(item);
+				})
+				.catch((err) => {
+					console.log(err);
+				});
+		},
+		//删除文件
+		deleteBranchClick() {
+			this.deleteVisible = true;
+			// this.$axios
+			// 	.deleteBranch()
+			// 	.then((res) => {
+			// 		console.log(res);
+			// 	})
+			// 	.catch((err) => {
+			// 		console.log(err);
+			// 	});
+		},
+		deleteFolderCancel() {
+			this.deleteVisible = false;
+		},
+		deleteFolderSubmit() {
+			const path = this.createFolderVal;
+			if (!path) return;
+			this.createFolder(`/${path}`);
+			this.createFolderVal = '';
+			this.deleteVisible = false;
+		},
+		deleteFolder(path) {
+			const pin_proxy = utils.storage.get('pin_proxy');
+			const access_token = utils.storage.get('access_token');
+			const device_info = utils.getClientDeviceInfo();
+			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
+			const { uuid = '' } = item;
+			const params = { access_token, uuid, path, device_info };
+
+			this.$axios
+				.createFolder(pin_proxy, params)
+				.then(() => {
+					this.getFileList(item);
 				})
 				.catch((err) => {
 					console.log(err);
@@ -487,6 +587,10 @@ export default {
 	padding: 0 0.6rem 0.4rem;
 }
 
+.dialog-inner-main {
+	margin: 0.4rem 0 0.6rem 0;
+}
+
 .dialog-inner-wrapper p {
 	height: 1rem;
 	line-height: 1rem;
@@ -497,7 +601,6 @@ export default {
 	box-sizing: border-box;
 	width: 100%;
 	height: 0.7rem;
-	margin: 0.4rem 0 0.6rem 0;
 	border-radius: 0.1rem;
 	padding-left: 0.2rem;
 }
