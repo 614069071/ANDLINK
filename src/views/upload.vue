@@ -13,7 +13,7 @@
 			<div class="crumbs-wrapper">全部磁盘>sda1</div>
 
 			<!-- 文件列表 -->
-			<div class="upload-type-title">上传中 <span class="close" @click="uploadVisible = !uploadVisible">v</span></div>
+			<div class="upload-type-title">上传中 <span class="close" :class="{collpase:uploadVisible}" @click="uploadVisible = !uploadVisible">v</span></div>
 
 			<div class="file-list-wrapper" v-show="uploadVisible">
 				<ul>
@@ -32,7 +32,7 @@
 				</ul>
 			</div>
 
-			<div class="upload-type-title">上传完成 <span class="close" @click="downloadVisible = !downloadVisible">v</span></div>
+			<div class="upload-type-title">上传完成 <span class="close" :class="{collpase:downloadVisible}" @click="downloadVisible = !downloadVisible">v</span></div>
 
 			<div class="file-list-wrapper" v-show="downloadVisible">
 				<ul>
@@ -136,8 +136,12 @@ export default {
 	width: 0.6rem;
 	height: 0.6rem;
 	line-height: 0.6rem;
-	text-align: right;
+	text-align: center;
 	/* background-color: red; */
+}
+
+.close.collpase {
+	transform: rotate(180deg);
 }
 
 .file-list-wrapper {
