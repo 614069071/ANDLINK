@@ -233,16 +233,17 @@ export default {
 									if (res.code == 0) {
 										self.getFileList(item);
 
-										// const uploadCacheList =
-										// 	utils.storage.get('uploadCacheList') || [];
-										// const data = {
-										// 	name: res.path.split('/').pop(),
-										// 	time: res.create_time,
-										// 	size: utils.toBety(res.bytes),
-										// 	img: utils.dePath(res),
-										// };
-										// uploadCacheList.push(data);
-										// utils.storage.set('uploadCacheList', uploadCacheList);
+										// 上传完成记录列表
+										const uploadCacheList =
+											utils.storage.get('uploadCacheList') || [];
+										const data = {
+											name: res.path.split('/').pop(),
+											time: utils.formatTime(res.create_time),
+											size: utils.toBety(res.bytes),
+											img: utils.dePath(res),
+										};
+										uploadCacheList.push(data);
+										utils.storage.set('uploadCacheList', uploadCacheList);
 									}
 								})
 								.catch((err) => {
