@@ -17,7 +17,7 @@
 
 			<div class="file-list-wrapper" v-show="uploadVisible">
 				<ul>
-					<li class="file-item-wrapper" v-for="item in 6" :key="item">
+					<li class="file-item-wrapper" v-for="item in 0" :key="item">
 						<div class="file-info">
 							<div class="file-info-img">
 								<img src="../assets/logo.png" alt="" />
@@ -36,15 +36,15 @@
 
 			<div class="file-list-wrapper" v-show="downloadVisible">
 				<ul>
-					<li class="file-item-wrapper" v-for="item in 3" :key="item">
+					<li class="file-item-wrapper" v-for="item in uploadList" :key="item.img">
 						<div class="file-info">
 							<div class="file-info-img">
-								<img src="../assets/logo.png" alt="" />
+								<img :src="item.img" alt="" />
 							</div>
 
 							<div class="file-info-main">
-								<p class="file-info-title ellipsis">test.jpg</p>
-								<p class="file-info-des"><span>4.08KB</span>2021-02-0417:34:50<span></span></p>
+								<p class="file-info-title ellipsis">{{item.name}}</p>
+								<p class="file-info-des file"><span>{{item.size}}</span>{{item.time}}<span></span></p>
 							</div>
 						</div>
 					</li>
@@ -56,13 +56,20 @@
 </template>
 
 <script>
+import utils from '../utils';
+
 export default {
 	name: 'upload-list',
 	data() {
 		return {
 			uploadVisible: true,
 			downloadVisible: true,
+			uploadList: [],
 		};
+	},
+	created() {
+		const uploadCacheList = utils.storage.get('uploadCacheList') || [];
+		this.uploadList = uploadCacheList;
 	},
 };
 </script>
@@ -181,14 +188,22 @@ export default {
 
 .file-info-main {
 	display: flex;
+	flex: 1;
+	overflow: hidden;
 	flex-direction: column;
 	justify-content: space-between;
+	/* background-color: pink; */
 }
 
 .file-info-main .file-info-title,
 .folder-info-main .folder-info-title {
 	font-size: 0.32rem;
 	flex: 1;
+}
+
+.file-info-des.file {
+	display: flex;
+	justify-content: space-between;
 }
 
 .file-info-main .file-info-des,
