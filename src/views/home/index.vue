@@ -353,13 +353,10 @@ export default {
 			this.resetInfo();
 
 			console.log(item, 'item');
-			const { uuid, path = '/', name = path.slice(1) || '' } = item;
+			const { uuid, path = '/' } = item;
 			const pin_proxy = utils.storage.get('pin_proxy');
 			const access_token = utils.storage.get('access_token');
 			const params = { access_token, uuid, path };
-			// 磁盘路径导航
-			// const crumb = { uuid, path, name };
-			// this.breadcrumbList.push(crumb);
 
 			this.$axios
 				.getFileList(pin_proxy, params)
@@ -394,16 +391,14 @@ export default {
 			this.createFolderVal = '';
 			this.createVisible = false;
 		},
-		createFolder(path) {
+		createFolder(folderName) {
 			const pin_proxy = utils.storage.get('pin_proxy');
 			const access_token = utils.storage.get('access_token');
 			const device_info = utils.getClientDeviceInfo();
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
-			const { uuid = '' } = item;
-			const params = { access_token, uuid, path, device_info };
-
-			console.log(params);
-			return;
+			const { uuid = '', path } = item;
+			const newname = path + folderName;
+			const params = { access_token, uuid, path: newname, device_info };
 
 			this.$axios
 				.createFolder(pin_proxy, params)
