@@ -10,8 +10,6 @@
 		</header>
 
 		<main class="main-wrapper">
-			<div class="crumbs-wrapper">全部磁盘>sda1</div>
-
 			<!-- 文件列表 -->
 			<div class="upload-type-title">上传中 <span class="close" :class="{collpase:uploadVisible}" @click="uploadVisible = !uploadVisible">v</span></div>
 
