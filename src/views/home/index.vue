@@ -143,7 +143,7 @@ export default {
 		return {
 			checklist: [],
 			filelist: [],
-			breadcrumbList: [{ uuid: '', name: '全部磁盘' }],
+			breadcrumbList: [{ uuid: '', name: '全部磁盘', path: '' }],
 			createVisible: false,
 			createFolderVal: '',
 			renameVisible: false,
@@ -189,6 +189,9 @@ export default {
 			const device_info = utils.getClientDeviceInfo();
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
 			const formData = new FormData();
+			const filePath = item.path + '/' + file.name;
+
+			console.log(item);
 			formData.append('file', file);
 
 			if (file.size <= 10 * 1024 * 1024) {
@@ -196,7 +199,7 @@ export default {
 					const params = {
 						access_token,
 						uuid: item.uuid,
-						path: '/' + file.name,
+						path: filePath,
 						simple_hash,
 						device_flag: device_info,
 						offset: 0,
@@ -210,10 +213,12 @@ export default {
 						.then((res) => {
 							console.log(res, 'upload');
 
+							if (res.code) return;
+
 							const params = {
 								access_token,
 								uuid: item.uuid,
-								path: '/' + file.name,
+								path: filePath,
 								size: file.size,
 								hash: simple_hash,
 								simple_hash,
@@ -227,6 +232,17 @@ export default {
 								.then((res) => {
 									if (res.code == 0) {
 										self.getFileList(item);
+
+										// const uploadCacheList =
+										// 	utils.storage.get('uploadCacheList') || [];
+										// const data = {
+										// 	name: res.path.split('/').pop(),
+										// 	time: res.create_time,
+										// 	size: utils.toBety(res.bytes),
+										// 	img: utils.dePath(res),
+										// };
+										// uploadCacheList.push(data);
+										// utils.storage.set('uploadCacheList', uploadCacheList);
 									}
 								})
 								.catch((err) => {

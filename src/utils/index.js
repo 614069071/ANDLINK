@@ -169,6 +169,14 @@ function getFileHash(file, success, error) {  //获取文件对应的hash值
   loadNext();
 }
 
+function dePath(item) {
+  const { uuid, path } = item;
+  const pin_proxy = storage.get('pin_proxy');
+  const access_token = storage.get('access_token');
+  var DOWNLOAD_FILE_PRIVATE = '/downloadFile';
+  return `${pin_proxy}.${DOWNLOAD_FILE_PRIVATE}?access_token=${access_token}&uuid=${uuid}&path=${path}`;
+}
+
 export default {
-  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash
+  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash, dePath
 }
