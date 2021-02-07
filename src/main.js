@@ -21,6 +21,12 @@ Vue.filter('dePath', item => {
   return `${pin_proxy}.${DOWNLOAD_FILE_PRIVATE}?access_token=${access_token}&uuid=${uuid}&path=${path}`;
 });
 
+Vue.filter('formatTime', time => {
+  return utils.formatTime(time);
+});
+
+
+
 Vue.config.productionTip = false
 
 new Vue({

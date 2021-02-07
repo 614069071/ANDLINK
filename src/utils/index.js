@@ -31,7 +31,7 @@ const storage = {
 function toBety(size) {
   var c = 0;
   var num = size;
-  var bety = ['K', 'M', 'G', 'T'];
+  var bety = ['KB', 'MB', 'GB', 'TB'];
 
   while (num >= 1024) {
     num /= 1024;
@@ -177,6 +177,44 @@ function dePath(item) {
   return `${pin_proxy}.${DOWNLOAD_FILE_PRIVATE}?access_token=${access_token}&uuid=${uuid}&path=${path}`;
 }
 
+// 统一格式
+// function formatNumber(n) {
+//   n = n.toString()
+//   return n[1] ? n : '0' + n
+// }
+
+// // 序列化时间
+// function formatTime(time) {
+//   const date = new Date(time).getTime();
+//   const year = date.getFullYear()
+//   const month = date.getMonth() + 1
+//   const day = date.getDate()
+//   const hour = date.getHours()
+//   const minute = date.getMinutes()
+//   const second = date.getSeconds()
+
+//   const ymd = [year, month, day].map(formatNumber).join('-');
+//   const hms = [hour, minute, second].map(formatNumber).join(':');
+//   return ymd + ' ' + hms;
+// }
+
+function add0(m) { return m < 10 ? '0' + m : m }
+
+//将Date转换为 yyyy-MM-dd hh:mm:ss
+function getNowFormatDate(mDate) {
+  var seperator1 = "-";
+  var seperator2 = ":";
+  var currentdate = mDate.getFullYear() + seperator1 + add0(mDate.getMonth() + 1) + seperator1 + add0(mDate.getDate())
+    + " " + add0(mDate.getHours()) + seperator2 + add0(mDate.getMinutes()) + seperator2 + add0(mDate.getSeconds());
+  return currentdate;
+}
+
+/* 将秒的时间戳转换为日期字符串 yyyy-MM-dd hh:mm:ss*/
+function formatTime(nS) {
+  var mDate = new Date(nS * 1000);
+  return getNowFormatDate(mDate);
+}
+
 export default {
-  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash, dePath
+  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash, dePath, formatTime
 }

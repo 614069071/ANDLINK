@@ -68,7 +68,7 @@
 
 								<div class="file-info-main">
 									<p class="file-info-title ellipsis">{{item.path.split('/').pop()}}</p>
-									<p class="file-info-des"><span>4.08KB</span>2021-02-0417:34:50<span></span></p>
+									<p class="file-info-des file"><span>{{item.bytes | toBety}}</span>{{item.update_time | formatTime}}<span></span></p>
 								</div>
 							</div>
 							<div class="file-control" @click="renameFolderClick(item)">重命名</div>
@@ -662,6 +662,12 @@ export default {
 .file-info-main .file-info-des,
 .folder-info-main .folder-info-des {
 	color: #ccc;
+}
+
+.file-info-des.file {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.24rem;
 }
 
 .folder-info-main {
