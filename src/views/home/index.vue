@@ -6,7 +6,7 @@
 				<div class="header-device ellipsis">设备名设备名设备名设备名设备名设备名</div>
 			</div>
 			<div class="header-center">我的云盘</div>
-			<div class="header-right">
+			<div class="header-right" v-show="isData">
 				<label><input type="file" hidden @change="uploadFile($event)" />上传</label>
 				<span @click="createVisible = true">新建</span>
 			</div>
@@ -83,7 +83,7 @@
 			</div>
 		</main>
 
-		<footer class="footer-wrapper">
+		<footer class="footer-wrapper" v-show="isData">
 			<span @click="deleteBranchClick">删除</span>
 			<span @click="downloadFiles">下载</span>
 			<span @click="$router.push('/upload')">任务</span>
@@ -141,6 +141,7 @@ export default {
 	name: 'Home',
 	data() {
 		return {
+			isData: false,
 			checklist: [],
 			filelist: [],
 			breadcrumbList: [{ uuid: '', name: '全部磁盘', path: '' }],
@@ -177,7 +178,9 @@ export default {
 			const { uuid, path = '/', name = path.slice(1) || '' } = item;
 			const crumb = { uuid, path, name };
 			this.breadcrumbList.push(crumb);
-			this.getFileList(item);
+			this.getFileList(item, () => {
+				this.isData = true;
+			});
 		},
 		uploadFile(e) {
 			console.log(e);
@@ -365,7 +368,7 @@ export default {
 			});
 		},
 		// 获取文件列表
-		getFileList(item) {
+		getFileList(item, callback) {
 			this.resetInfo();
 
 			console.log(item, 'item');
@@ -378,6 +381,7 @@ export default {
 				.getFileList(pin_proxy, params)
 				.then((res) => {
 					this.filelist = res.contents;
+					callback && callback();
 				})
 				.catch((err) => {
 					console.log(err);
@@ -517,6 +521,7 @@ export default {
 		// 下载
 		downloadFiles() {
 			const item = this.checklist[0];
+			if (!item) return;
 			const anchor = document.createElement('a');
 			const src = utils.downloadFilePath(item);
 			anchor.href = src;
