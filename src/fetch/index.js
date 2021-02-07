@@ -58,18 +58,9 @@ export default {
 
   },
   // 重命名
-  renameFileOrFolder(pin_proxy, uuid, path) {
+  renameFileOrFolder(pin_proxy, params) {
     const url = pin_proxy + api.MOVE_FILE_OR_FOLDER;
-    const params = {
-      access_token: '',
-      from_uuid: uuid,
-      from_path: path + 'example.txt',
-      to_uuid: uuid,
-      to_path: path + 'example1.txt',
-      device_info: '',
-      flag: 1,
-      b_cross: false
-    };
+
     return axios.get(url, { params });
   }
 }

@@ -68,11 +68,11 @@
 									</div>
 
 									<div class="file-info-main">
-										<p class="file-info-title ellipsis">test.jpg</p>
+										<p class="file-info-title ellipsis">{{item.path.split('/').pop()}}</p>
 										<p class="file-info-des"><span>4.08KB</span>2021-02-0417:34:50<span></span></p>
 									</div>
 								</div>
-								<div class="file-control">重命名</div>
+								<div class="file-control" @click="renameFolderClick(item)">重命名</div>
 							</li>
 						</template>
 
@@ -348,30 +348,48 @@ export default {
 		},
 		//重命名
 		renameFolderClick(item) {
-			console.log(item);
 			this.renameVisible = true;
 			this.renameItem = item;
 		},
 		renameFolderCancel() {
 			this.renameVisible = false;
+			this.renameFolderVal = '';
 		},
 		renameFolderSubmit() {
-			const path = this.createFolderVal;
-			if (!path) return;
-			this.createFolder(`/${path}`);
+			const name = this.renameFolderVal;
+			if (!name) return;
+			this.renameFolder();
 			this.renameFolderVal = '';
 			this.renameVisible = false;
 		},
-		renameFolder(path) {
+		renameFolder() {
 			const pin_proxy = utils.storage.get('pin_proxy');
 			const access_token = utils.storage.get('access_token');
 			const device_info = utils.getClientDeviceInfo();
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
-			const { uuid = '' } = item;
-			const params = { access_token, uuid, path, device_info };
+			const { uuid = '', path = '' } = this.renameItem;
+			const newnameArr = path.split('/').slice(0, -1);
+			newnameArr.push(this.renameFolderVal);
+			const rename = newnameArr.join('/');
+			console.log(rename, 'rename');
+
+			console.log(this.renameItem, 'renameItem');
+
+			const params = {
+				access_token,
+				from_uuid: uuid,
+				from_path: path,
+				to_uuid: uuid,
+				to_path: rename,
+				device_info,
+				flag: 1,
+				b_cross: false,
+			};
+
+			console.log('renameFolder params', params);
 
 			this.$axios
-				.createFolder(pin_proxy, params)
+				.renameFileOrFolder(pin_proxy, params)
 				.then(() => {
 					this.getFileList(item);
 				})
@@ -395,10 +413,6 @@ export default {
 			this.deleteVisible = false;
 		},
 		deleteFolderSubmit() {
-			const path = this.createFolderVal;
-			if (!path) return;
-			this.createFolder(`/${path}`);
-			this.createFolderVal = '';
 			this.deleteVisible = false;
 		},
 		deleteFolder(path) {
