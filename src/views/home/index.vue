@@ -181,9 +181,8 @@ export default {
 
 			if (path === last.path) return;
 
-			this.breadcrumbList.push(crumb);
-
 			this.getFileList(item, () => {
+				this.breadcrumbList.push(crumb);
 				this.isData = true;
 			});
 		},
