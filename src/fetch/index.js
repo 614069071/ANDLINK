@@ -33,6 +33,7 @@ export default {
   ordinaryUserBinding: (user_id, bar_code) => {
     const data = { user_id, bar_code, app_type: '1020' };
     return axios.post(NORMAL_USER_BIND, data);
+    // return axios.post(NORMAL_USER_BIND, JSON.stringify(data));
   },
   bindDevice: (pin_proxy, user_id, bar_code) => {
     const url = pin_proxy + api.BIND_DEVICE;
