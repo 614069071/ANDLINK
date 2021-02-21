@@ -22,7 +22,7 @@
 				<template v-for="item in filelist">
 					<!-- 文件夹 -->
 					<template v-if="item.is_dir">
-						<div class="file-item-wrapper" :key="item.create_time">
+						<div class="file-item-wrapper" :key="`${item.create_time}` + Math.random()">
 							<label class="file-check">
 								<input type="checkbox" :value="item" v-model="checklist" />
 							</label>
@@ -43,7 +43,7 @@
 
 					<!-- 磁盘 -->
 					<template v-else-if="item.type === 'usb' || item.type === 'data'">
-						<div class="file-item-wrapper" :key="item.create_time" @click="folderClick(item)">
+						<div class="file-item-wrapper" :key="`${item.create_time}` + Math.random()" @click="folderClick(item)">
 							<div class="file-info-img">
 								<img src="../../assets/disk.png" alt="">
 							</div>
@@ -56,7 +56,7 @@
 
 					<!-- 文件 -->
 					<template v-else>
-						<div class="file-item-wrapper" :key="item.create_time">
+						<div class="file-item-wrapper" :key="`${item.create_time}` + Math.random()">
 							<label class="file-check">
 								<input type="checkbox" :value="item" v-model="checklist" />
 							</label>
@@ -136,6 +136,10 @@
 <script>
 import '../../utils/hejia.min';
 import utils from '../../utils';
+import axios from 'axios';
+import qs from 'qs';
+
+console.log(qs, 'qs');
 
 export default {
 	name: 'Home',
@@ -509,9 +513,21 @@ export default {
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
 
 			// const data = new FormData();
+			// data.append('paths', JSON.stringify(deleteArr));
 			// data.append('paths', deleteArr);
 
 			const data = { paths: deleteArr };
+			// const data = { paths: JSON.stringify(deleteArr) };
+
+			axios
+				.post(pin_proxy + '/deleteFileOrFolderInBatch', data, {
+					params,
+				})
+				.then((res) => {
+					console.log(res, 'delete');
+				});
+
+			return;
 
 			this.$axios
 				.deleteBranch(pin_proxy, data, params)
