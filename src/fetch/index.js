@@ -3,7 +3,6 @@ import api from './api';
 const IS_PHONE_BIND = 'http://rapi.filedisk.info/c/checkPhoneInfo';
 const NORMAL_USER_BIND =
   'https://gr-share.com/c/normalUserBindDeviceH5';
-// let deviceUrl = '';
 
 export default {
   checkPhoneInfo: (code, phone) => {
