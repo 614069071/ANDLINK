@@ -5,7 +5,10 @@ import axios from "axios";
 // }, err => Promise.reject(err));
 
 axios.interceptors.response.use(response => {
-  return response.data;
+  if (response.data.code == 0) {
+    return response.data;
+  }
+  return Promise.reject(response.data);
 }, err => {
   return Promise.reject(err);
 });
