@@ -196,13 +196,12 @@ export default {
 			const bar_code = utils.storage.get('bar_code');
 			const device_info = utils.getClientDeviceInfo();
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
-			const formData = new FormData();
 			const filePath = item.path + '/' + file.name;
 
-			console.log(item);
-			formData.append('file', file);
+			function uploadFileItem(file) {
+				const formData = new FormData();
+				formData.append('file', file);
 
-			if (file.size <= 10 * 1024 * 1024) {
 				utils.getFileHash(file, function (simple_hash) {
 					const params = {
 						access_token,
@@ -216,6 +215,7 @@ export default {
 						device_info,
 					};
 
+					// 上传文件
 					self.$axios
 						.uploadFile(pin_proxy, formData, params)
 						.then((res) => {
@@ -235,6 +235,7 @@ export default {
 								bar_code,
 							};
 
+							// 上传hash
 							self.$axios
 								.uploadHash(pin_proxy, params)
 								.then((res) => {
@@ -263,7 +264,21 @@ export default {
 						});
 				});
 			}
+
+			if (file.size <= 10 * 1024 * 1024) {
+				uploadFileItem(file);
+				// 10MB 内文件上传
+			} else {
+				// 大文件上传
+				utils.loadFromBlob(file, function (data) {
+					console.log('大文件了', data);
+					//console.log(data);
+					// uploadFileItem(data);
+					//uploadFile2Private(file,form,data);
+				});
+			}
 		},
+
 		hejiaReady(callback) {
 			window.Hejia.ready(function () {
 				// 页面加载完成后要立即调用Hejia全局对象执行的代码逻辑写这里
@@ -688,6 +703,7 @@ export default {
 	flex: 1;
 	display: flex;
 	align-items: center;
+	overflow: hidden;
 	padding-right: 0.2rem;
 	justify-content: space-between;
 }
