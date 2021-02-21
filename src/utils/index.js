@@ -92,8 +92,29 @@ function getFileReaderBufferToStr(result) {
   return binary;
 }
 
+function addReadAsBinaryString() {
+  //不存在时，重写readAsBinaryString
+  //extend FileReader
+  if (!FileReader.prototype.readAsBinaryString) {
+    FileReader.prototype.readAsBinaryString = function (fileData) {
+      var pt = this;
+      var reader = new FileReader();
+      reader.onload = function () {
+        //pt.result  - readonly so assign binary
+        pt.content = getFileReaderBufferToStr(reader.result);
+      }
+      reader.readAsArrayBuffer(fileData);
+    }
+    FileReader.hasBinaryString = false;
+  } else {
+    FileReader.hasBinaryString = true;
+  }
+}
+
+addReadAsBinaryString();
+
 function getFileHash(file, success, error) {  //获取文件对应的hash值
-  var _funH = this;
+  var _funH = {};
   var blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
     chunkSize = 2097152,                             // Read in chunks of 2MB
     chunks = Math.ceil(file.size / chunkSize),
@@ -105,7 +126,6 @@ function getFileHash(file, success, error) {  //获取文件对应的hash值
 
   _funH.fileReader.onload = function (e) {
     currentChunk++;
-    //if(FILE_UPLOAD_DEBUG){ console.log('read chunk nr', currentChunk, 'of', chunks);}
     if (e && e.target) {
       _funH.sha1Encode.update(e.target.result);
     } else {
@@ -113,12 +133,11 @@ function getFileHash(file, success, error) {  //获取文件对应的hash值
       _funH.sha1Encode.update(buff);
     }
 
-    //if(FILE_UPLOAD_DEBUG){ console.log('start next chunk');}
     if (currentChunk < chunks) {
       loadNext();
+      console.log('大于2M loadNext')
     } else {
       _funH.is_cal_hash = false;
-      //if(FILE_UPLOAD_DEBUG){ console.log('finished loading');}
       var hash = _funH.sha1Encode.getHash('HEX').toLowerCase();
       _funH.sha1Encode = null;
       if (_funH.fileReader) {
@@ -150,12 +169,14 @@ function getFileHash(file, success, error) {  //获取文件对应的hash值
 
   //开始读取文件流。或读取下一条数据
   function loadNext() {
-    var start = currentChunk * chunkSize,
-      end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
+    var start = currentChunk * chunkSize;
+    var end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
     try {
       if (FileReader.hasBinaryString) {
+        console.log('loadNext readAsBinaryString')
         _funH.fileReader.readAsBinaryString(blobSlice.call(file, start, end));
       } else {
+        console.log('loadNext readAsArrayBuffer')
         _funH.fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
       }
     } catch (e) {
@@ -227,6 +248,137 @@ function getRandom() {
   return timeStamp + returnStr;
 }
 
+
+function getFileJumpSize(fSize) {
+  var ONE_MEAG = 1024 * 1024;
+  const mSize = fSize / ONE_MEAG;//文件有多少M
+
+  if (mSize <= 10) {
+    return 0;
+  } else if (mSize <= 100) { //小于100M
+    return ONE_MEAG; //每跳过1M
+  } else if (mSize <= 1024) { //小于1G
+    return ONE_MEAG * 10; //每跳过10M
+  } else {
+    return ONE_MEAG * 100; //每跳过100M
+  }
+}
+
+//获取文件的快速hash值
+function loadFromBlob(file, success) {
+  var ONE_MEAG = 1024 * 1024,
+    // blob = file.getSource(),
+    chunkSize = 2 * 1024 * 1024,
+    chunks = Math.ceil(file.size / chunkSize),
+    jumpFileSize = 0,
+    lastChunk = false,
+    currentChunk = 0,
+    hashSha1 = new SHA('SHA-1', 'BYTES'),
+    me = this,
+    blobSlice = file.mozSlice || file.webkitSlice || file.slice,
+    arrayBufferToStr, loadNext, loadOver, fr;
+
+  jumpFileSize = getFileJumpSize(file.size);
+
+  if (jumpFileSize > 0) {
+    chunkSize = 1024 * 10; //截取10kb
+    chunks = Math.ceil(file.size / jumpFileSize);
+  } else {
+    chunks = Math.ceil(file.size / chunkSize);
+  }
+
+  fr = new FileReader();
+
+  arrayBufferToStr = function (result) {
+    var bs = "";
+    var bytes = new Uint8Array(result);
+    var l = bytes.byteLength;
+    for (var i = 0; i < l; i++) {
+      bs += String.fromCharCode(bytes[i]);
+    }
+    bytes = undefined;
+    //pt.result  - readonly so assign bs
+    return bs;
+  }
+  loadOver = function () {
+    setTimeout(function () {
+      //owner.trigger('load');
+      me.result = hashSha1.getHash('HEX').toUpperCase();
+      success(me.result);
+      loadNext = arrayBufferToStr = loadOver = file = hashSha1 = null;
+      // owner.trigger('complete');
+    }, 50);
+  }
+  loadNext = function () {
+
+    console.log(123456)
+
+    var start, end;
+
+    if (jumpFileSize > 0) {  //读取文件的位置
+      if (currentChunk == 0) {
+        start = 0;
+        end = ONE_MEAG;
+      } else if (currentChunk == 1 && !lastChunk) {  //第二次读取。读最后一块
+        start = file.size - ONE_MEAG;
+        end = file.size;
+      } else if (currentChunk < chunks) {
+        end = currentChunk * (jumpFileSize + chunkSize); //快速hash只读取10K的数据
+        start = end - chunkSize;
+        if (end > file.size) {  //结束抽取
+          console.log('loadOver 111')
+          loadOver();
+          return;
+        }
+      }
+    } else {
+      lastChunk = true;
+      start = currentChunk * chunkSize;
+      end = start + chunkSize;
+      if (end > file.size) {
+        end = file.size
+      }
+    }
+
+    if (fr.hasBinaryString) {
+      fr.readAsBinaryString(blobSlice.call(file, start, end));
+    } else {
+      fr.readAsArrayBuffer(blobSlice.call(file, start, end));
+    }
+
+    fr.onload = function () {
+      if (currentChunk == 1 && !lastChunk) {
+        lastChunk = true;
+        console.log('截取尾部1M hash = ' + lastChunk)
+      } else {
+        currentChunk++;
+      }
+
+      hashSha1.update(arrayBufferToStr(this.result));
+    };
+
+    fr.onloadend = function () {
+      fr.onloadend = fr.onload = null;
+
+      if (currentChunk < chunks) {
+        setTimeout(loadNext, 1);
+      } else {
+        loadOver();
+        console.log('loadOver 345')
+
+      }
+    };
+  };
+
+  loadNext();
+}
+
+
+// 分片上传
+function shardUploadFiles() {
+
+}
+
 export default {
-  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash, dePath, formatTime, getRandom
+  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash, dePath, formatTime, getRandom, loadFromBlob, shardUploadFiles
 }
