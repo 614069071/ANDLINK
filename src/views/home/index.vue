@@ -136,10 +136,6 @@
 <script>
 import '../../utils/hejia.min';
 import utils from '../../utils';
-import axios from 'axios';
-import qs from 'qs';
-
-console.log(qs, 'qs');
 
 export default {
 	name: 'Home',
@@ -511,23 +507,7 @@ export default {
 			const device_info = utils.getClientDeviceInfo();
 			const params = { access_token, device_info };
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
-
-			// const data = new FormData();
-			// data.append('paths', JSON.stringify(deleteArr));
-			// data.append('paths', deleteArr);
-
 			const data = { paths: deleteArr };
-			// const data = { paths: JSON.stringify(deleteArr) };
-
-			axios
-				.post(pin_proxy + '/deleteFileOrFolderInBatch', data, {
-					params,
-				})
-				.then((res) => {
-					console.log(res, 'delete');
-				});
-
-			return;
 
 			this.$axios
 				.deleteBranch(pin_proxy, data, params)
