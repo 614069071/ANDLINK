@@ -85,7 +85,7 @@
 
 		<footer class="footer-wrapper" v-show="isData">
 			<span @click="deleteBranchClick">删除</span>
-			<span @click="downloadFiles">下载</span>
+			<!-- <span @click="downloadFiles">下载</span> -->
 			<span @click="$router.push('/upload')">任务</span>
 		</footer>
 
@@ -177,7 +177,12 @@ export default {
 		folderClick(item) {
 			const { uuid, path = '/', name = path.slice(1) || '' } = item;
 			const crumb = { uuid, path, name };
+			const last = this.breadcrumbList[this.breadcrumbList.length - 1];
+
+			if (path === last.path) return;
+
 			this.breadcrumbList.push(crumb);
+
 			this.getFileList(item, () => {
 				this.isData = true;
 			});
