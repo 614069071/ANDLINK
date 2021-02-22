@@ -6,7 +6,9 @@
 				<span class="header-back" @click="$router.back()">&lt;</span>
 			</div>
 			<div class="header-center">上传列表</div>
-			<div class="header-right"></div>
+			<div class="header-right">
+				<span @click="deleteAllHistory">清空列表</span>
+			</div>
 		</header>
 
 		<main class="main-wrapper">
@@ -34,7 +36,7 @@
 
 			<div class="file-list-wrapper" v-show="downloadVisible">
 				<ul>
-					<li class="file-item-wrapper" v-for="item in uploadList" :key="item.img + Math.random()">
+					<li class="file-item-wrapper" v-for="(item,index) in uploadList" :key="item.img + Math.random()">
 						<div class="file-info">
 							<div class="file-info-img">
 								<img :src="item.img | dePath" alt="" />
@@ -44,6 +46,8 @@
 								<p class="file-info-title ellipsis">{{item.name}}</p>
 								<p class="file-info-des file"><span>{{item.size}}</span>{{item.time}}<span></span></p>
 							</div>
+
+							<div class="file-control" @click="deleteHistory(index)">删除</div>
 						</div>
 					</li>
 				</ul>
@@ -68,6 +72,18 @@ export default {
 	created() {
 		const uploadCacheList = utils.storage.get('uploadCacheList') || [];
 		this.uploadList = uploadCacheList;
+	},
+	methods: {
+		deleteAllHistory() {
+			utils.storage.set('uploadCacheList', []);
+			this.uploadList = [];
+		},
+		deleteHistory(i) {
+			const uploadCacheList = utils.storage.get('uploadCacheList') || [];
+			uploadCacheList.splice(i, 1);
+			utils.storage.set('uploadCacheList', uploadCacheList);
+			this.uploadList = uploadCacheList;
+		},
 	},
 };
 </script>
@@ -222,10 +238,11 @@ export default {
 }
 
 .file-control {
-	width: 0.64rem;
-	height: 0.64rem;
-	line-height: 0.64rem;
+	width: 1rem;
+	height: 1rem;
+	line-height: 1rem;
 	text-align: center;
 	color: #bbb;
+	white-space: nowrap;
 }
 </style>
