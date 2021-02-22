@@ -43,7 +43,7 @@
 							</div>
 
 							<div class="file-info-main">
-								<p class="file-info-title ellipsis">{{item.name}}</p>
+								<p class="file-info-title ellipsis">{{item.path.split('/').pop()}}</p>
 								<p class="file-info-des file"><span>{{(item.size / 1024) | toBety}}</span>{{item.time}}<span></span></p>
 							</div>
 

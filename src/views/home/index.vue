@@ -251,7 +251,12 @@ export default {
 										// 上传完成记录列表
 										const uploadCacheList =
 											utils.storage.get('uploadCacheList') || [];
-										const data = { path: res.path, uuid: res.uuid };
+										const data = {
+											time: utils.formatTime(res.create_time),
+											size: res.bytes,
+											path: res.path,
+											uuid: res.uuid,
+										};
 										uploadCacheList.push(data);
 
 										console.log('uploadCacheList', uploadCacheList);
