@@ -29,11 +29,11 @@ const storage = {
 }
 
 function toBety(size) {
-  var c = 0;
-  var num = size;
-  var bety = ['KB', 'MB', 'GB', 'TB'];
+  let c = 0;
+  let num = size;
+  let bety = ['KB', 'MB', 'GB', 'TB'];
 
-  while (num >= 1024) {
+  while (num > 1024) {
     num /= 1024;
     c++;
   }

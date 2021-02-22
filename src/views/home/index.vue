@@ -49,6 +49,7 @@
 							</div>
 							<div class="file-info-main">
 								<p class="folder-info-title ellipsis">{{item.name}}</p>
+								<!-- 文件返回是kbety -->
 								<p class="folder-info-des">{{(item.total_space - item.free_space) | toBety}}/{{item.total_space | toBety}}</p>
 							</div>
 						</div>
@@ -68,7 +69,8 @@
 
 								<div class="file-info-main">
 									<p class="file-info-title ellipsis">{{item.path.split('/').pop()}}</p>
-									<p class="file-info-des file"><span>{{item.bytes | toBety}}</span>{{item.update_time | formatTime}}<span></span></p>
+									<!-- 文件返回是bety -->
+									<p class="file-info-des file"><span>{{(item.bytes / 1024) | toBety}}</span>{{item.update_time | formatTime}}<span></span></p>
 								</div>
 							</div>
 							<div class="file-control" @click="renameFolderClick(item)">重命名</div>
