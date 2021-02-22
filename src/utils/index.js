@@ -123,7 +123,6 @@ function getFileHash(file, success, error) {  //获取文件对应的hash值
   _funH.fileReader.onload = function (e) {
     currentChunk++;
     if (e && e.target) {
-      console.log(e.target, 'e.target.result')
       _funH.sha1Encode.update(e.target.result);
     } else {
       const buff = getFileReaderBufferToStr(e.result);

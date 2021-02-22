@@ -211,7 +211,8 @@ export default {
 				device_info,
 			};
 
-			function uploadFileItem(file) {
+			// 2MB 内文件上传
+			if (file.size <= 2 * 1024 * 1024) {
 				const formData = new FormData();
 				formData.append('file', file);
 
@@ -227,8 +228,6 @@ export default {
 						.uploadFile(pin_proxy, formData, params)
 						.then((res) => {
 							console.log(res, 'upload');
-
-							if (res.code) return;
 
 							const params = {
 								access_token,
@@ -252,13 +251,10 @@ export default {
 										// 上传完成记录列表
 										const uploadCacheList =
 											utils.storage.get('uploadCacheList') || [];
-										const data = {
-											name: res.path.split('/').pop(),
-											time: utils.formatTime(res.create_time),
-											size: utils.toBety(res.bytes),
-											img: utils.dePath(res),
-										};
+										const data = { path: res.path, uuid: res.uuid };
 										uploadCacheList.push(data);
+
+										console.log('uploadCacheList', uploadCacheList);
 										utils.storage.set('uploadCacheList', uploadCacheList);
 									}
 								})
@@ -270,26 +266,9 @@ export default {
 							console.log(err);
 						});
 				});
-			}
-
-			if (file.size <= 2 * 1024 * 1024) {
-				uploadFileItem(file);
-				// 10MB 内文件上传
 			} else {
-				// 大文件上传
-				// utils.getCompleteHash(file, function (hash) {
-				// 	console.log(hash, '大文件上传');
-				// });
-				// utils.getFileHash(file, function (hash) {
-				// 	console.log(hash, '大文件上传');
-				// });
+				// 超过2M启用分片上传
 				this.shardUploadFiles(file, static_params);
-				// utils.loadFromBlob(file, function (data) {
-				// 	console.log('大文件了', data);
-				// 	//console.log(data);
-				// 	// uploadFileItem(data);
-				// 	uploadFile2Private(file,form,data);
-				// });
 			}
 		},
 		// 分片上传

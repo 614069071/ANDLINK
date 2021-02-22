@@ -39,12 +39,12 @@
 					<li class="file-item-wrapper" v-for="(item,index) in uploadList" :key="item.img + Math.random()">
 						<div class="file-info">
 							<div class="file-info-img">
-								<img :src="item.img | dePath" alt="" />
+								<img :src="item | dePath" alt="" />
 							</div>
 
 							<div class="file-info-main">
 								<p class="file-info-title ellipsis">{{item.name}}</p>
-								<p class="file-info-des file"><span>{{item.size}}</span>{{item.time}}<span></span></p>
+								<p class="file-info-des file"><span>{{(item.size / 1024) | toBety}}</span>{{item.time}}<span></span></p>
 							</div>
 
 							<div class="file-control" @click="deleteHistory(index)">删除</div>
@@ -69,9 +69,11 @@ export default {
 			uploadList: [],
 		};
 	},
-	created() {
-		const uploadCacheList = utils.storage.get('uploadCacheList') || [];
-		this.uploadList = uploadCacheList;
+	watch: {
+		$route() {
+			const uploadCacheList = utils.storage.get('uploadCacheList') || [];
+			this.uploadList = uploadCacheList;
+		},
 	},
 	methods: {
 		deleteAllHistory() {
@@ -196,6 +198,7 @@ export default {
 .file-info {
 	display: flex;
 	flex: 1;
+	overflow: hidden;
 }
 
 .file-info-img {
