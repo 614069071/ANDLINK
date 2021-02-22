@@ -2,13 +2,14 @@
 	<div class="home-view-wrapper">
 		<header class="header-wrapper">
 			<div class="header-left">
-				<span class="header-back">&lt;</span>
 				<div class="header-device ellipsis">设备名设备名设备名设备名设备名设备名</div>
 			</div>
 			<div class="header-center">我的云盘</div>
-			<div class="header-right" v-show="isData">
-				<label><input type="file" hidden @change="uploadFile($event)" />上传</label>
-				<span @click="createVisible = true">新建</span>
+			<div class="header-right">
+				<div v-show="isData">
+					<label><input type="file" hidden @change="uploadFile($event)" />上传</label>
+					<span @click="createVisible = true">新建</span>
+				</div>
 			</div>
 		</header>
 
@@ -68,7 +69,7 @@
 								</div>
 
 								<div class="file-info-main">
-									<p class="file-info-title ellipsis">{{item.path.split('/').pop()}}</p>
+									<p class="file-info-title ellipsis"><a :href="item | deUploadSrc" download>{{item.path.split('/').pop()}}</a></p>
 									<!-- 文件返回是bety -->
 									<p class="file-info-des file"><span>{{(item.bytes / 1024) | toBety}}</span>{{item.update_time | formatTime}}<span></span></p>
 								</div>
@@ -492,6 +493,10 @@ export default {
 			console.log(this.breadcrumbList, 'arr');
 
 			// this.breadcrumbList = arr;
+
+			if (!index) {
+				this.isData = false;
+			}
 
 			if (item.uuid) {
 				this.getFileList(item);

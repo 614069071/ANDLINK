@@ -15,7 +15,7 @@
 
 			<div class="file-list-wrapper" v-show="uploadVisible">
 				<ul>
-					<li class="file-item-wrapper" v-for="item in 0" :key="item">
+					<li class="file-item-wrapper" v-for="item in 0" :key="item  + Math.random()">
 						<div class="file-info">
 							<div class="file-info-img">
 								<img src="../assets/logo.png" alt="" />
@@ -34,10 +34,10 @@
 
 			<div class="file-list-wrapper" v-show="downloadVisible">
 				<ul>
-					<li class="file-item-wrapper" v-for="item in uploadList" :key="item.img">
+					<li class="file-item-wrapper" v-for="item in uploadList" :key="item.img + Math.random()">
 						<div class="file-info">
 							<div class="file-info-img">
-								<img :src="item.img" alt="" />
+								<img :src="item.img | dePath" alt="" />
 							</div>
 
 							<div class="file-info-main">
