@@ -186,6 +186,7 @@ export default {
 				this.isData = true;
 			});
 		},
+		// 文件上传
 		uploadFile(e) {
 			console.log(e);
 			const self = this;
@@ -197,22 +198,26 @@ export default {
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
 			const filePath = item.path + '/' + file.name;
 
+			const static_params = {
+				access_token,
+				uuid: item.uuid,
+				path: filePath,
+				device_flag: device_info,
+				size: file.size,
+				over_write: 1,
+				device_info,
+			};
+
 			function uploadFileItem(file) {
 				const formData = new FormData();
 				formData.append('file', file);
 
 				utils.getFileHash(file, function (simple_hash) {
-					const params = {
-						access_token,
-						uuid: item.uuid,
-						path: filePath,
+					console.log(simple_hash, 'simple_hash');
+					const params = Object.assign({}, static_params, {
 						simple_hash,
-						device_flag: device_info,
 						offset: 0,
-						size: file.size,
-						over_write: 1,
-						device_info,
-					};
+					});
 
 					// 上传文件
 					self.$axios
@@ -264,20 +269,93 @@ export default {
 				});
 			}
 
-			if (file.size <= 10 * 1024 * 1024) {
+			if (file.size <= 2 * 1024 * 1024) {
 				uploadFileItem(file);
 				// 10MB 内文件上传
 			} else {
 				// 大文件上传
-				utils.loadFromBlob(file, function (data) {
-					console.log('大文件了', data);
-					//console.log(data);
-					// uploadFileItem(data);
-					//uploadFile2Private(file,form,data);
-				});
+				// utils.getCompleteHash(file, function (hash) {
+				// 	console.log(hash, '大文件上传');
+				// });
+				// utils.getFileHash(file, function (hash) {
+				// 	console.log(hash, '大文件上传');
+				// });
+				this.shardUploadFiles(file, static_params);
+				// utils.loadFromBlob(file, function (data) {
+				// 	console.log('大文件了', data);
+				// 	//console.log(data);
+				// 	// uploadFileItem(data);
+				// 	uploadFile2Private(file,form,data);
+				// });
 			}
 		},
+		// 分片上传
+		shardUploadFiles(file, static_params) {
+			const self = this;
+			let count = 0;
+			const buffer = utils.toBuffer(file);
+			const pieces = buffer.length;
+			const pin_proxy = utils.storage.get('pin_proxy');
+			let offset = 0; //记录上一次偏移量
 
+			function fileShardUploadFiles(ufile) {
+				//获取快速hash
+				utils.getFileHash(ufile, function (simple_hash) {
+					const params = Object.assign({}, static_params, {
+						simple_hash,
+						offset,
+						over_write: 1,
+					});
+					const formData = new FormData();
+					formData.append('files', ufile);
+
+					// 上传分片文件
+					self.$axios
+						.fileShardUploadFiles(pin_proxy, formData, params)
+						.then((res) => {
+							count++;
+							offset = res.offset;
+							console.log(res);
+							if (count <= pieces - 1) {
+								fileShardUploadFiles(buffer[count]);
+							}
+
+							// 上传完成hash
+							if (count === pieces - 1) {
+								// 获取完整hash
+								console.log('上传完了');
+
+								utils.getCompleteHash(file, function (hash) {
+									const merge = { simple_hash: hash, hash };
+									const params = Object.assign({}, static_params, merge);
+
+									self.$axios
+										.uploadHash(pin_proxy, params)
+										.then((res) => {
+											console.log(res);
+											const breadItem =
+												self.breadcrumbList[self.breadcrumbList.length - 1];
+											const list_params = {
+												access_token: static_params.access_token,
+												uuid: static_params.uuid,
+												path: breadItem.path,
+											};
+											self.getFileList(list_params);
+										})
+										.catch((err) => {
+											console.log(err);
+										});
+								});
+							}
+						})
+						.catch((err) => {
+							console.log(err);
+						});
+				});
+			}
+
+			fileShardUploadFiles(buffer[0]);
+		},
 		hejiaReady(callback) {
 			window.Hejia.ready(function () {
 				// 页面加载完成后要立即调用Hejia全局对象执行的代码逻辑写这里

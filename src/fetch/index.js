@@ -77,11 +77,20 @@ export default {
 
     return axios.post(url, data, { params });
   },
-  // 上传hash
+  // 上传hash(分片完整hash)
   uploadHash(pin_proxy, params) {
     const url = pin_proxy + api.GET_ALL_FILE_HASH;
 
     return axios.get(url, { params });
+  },
+  // 分片上传
+  fileShardUploadFiles(pin_proxy, file, params) {
+    const url = pin_proxy + api.UPLOAD_FILE_BY_BLOCK_2_PRIVATE;
+    return axios.post(url, file, { params });
+  },
+  // 分片上传快速hash(检测hash)
+  fileShardUploadFileHash() {
+
   }
 }
 

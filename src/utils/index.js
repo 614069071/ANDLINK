@@ -97,12 +97,7 @@ function addReadAsBinaryString() {
   //extend FileReader
   if (!FileReader.prototype.readAsBinaryString) {
     FileReader.prototype.readAsBinaryString = function (fileData) {
-      var pt = this;
       var reader = new FileReader();
-      reader.onload = function () {
-        //pt.result  - readonly so assign binary
-        pt.content = getFileReaderBufferToStr(reader.result);
-      }
       reader.readAsArrayBuffer(fileData);
     }
     FileReader.hasBinaryString = false;
@@ -113,6 +108,7 @@ function addReadAsBinaryString() {
 
 addReadAsBinaryString();
 
+// 获取文件hash
 function getFileHash(file, success, error) {  //获取文件对应的hash值
   var _funH = {};
   var blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
@@ -127,6 +123,7 @@ function getFileHash(file, success, error) {  //获取文件对应的hash值
   _funH.fileReader.onload = function (e) {
     currentChunk++;
     if (e && e.target) {
+      console.log(e.target, 'e.target.result')
       _funH.sha1Encode.update(e.target.result);
     } else {
       const buff = getFileReaderBufferToStr(e.result);
@@ -139,6 +136,7 @@ function getFileHash(file, success, error) {  //获取文件对应的hash值
     } else {
       _funH.is_cal_hash = false;
       var hash = _funH.sha1Encode.getHash('HEX').toLowerCase();
+      console.log(hash, 'getFileHash hash')
       _funH.sha1Encode = null;
       if (_funH.fileReader) {
         _funH.fileReader.m_is_abort = true;
@@ -373,12 +371,39 @@ function loadFromBlob(file, success) {
   loadNext();
 }
 
+function toBuffer(file = {}, fz = 2097152) {
+  const { size = 0 } = file;
+  const n = Math.ceil(size / fz);
+  const a = new Array(n).fill(null);
+  const buffer = a.map((e, i) => file.slice(i * fz, (i + 1) * fz));
 
-// 分片上传
-function shardUploadFiles() {
+  return buffer;
+}
 
+// 获取文件hash
+function getCompleteHash(file, callback) {
+  const fileReader = new FileReader();
+  const sha1Encode = new SHA('SHA-1', 'BYTES');
+
+  fileReader.readAsBinaryString(file);
+
+  fileReader.onload = function (e) {
+    console.log(e, 'getCompleteHash');
+
+    if (e && e.target) {
+      sha1Encode.update(e.target.result);
+    } else {
+      const buff = getFileReaderBufferToStr(e.result);
+      sha1Encode.update(buff);
+    }
+
+    const hash = sha1Encode.getHash('HEX').toLowerCase();
+
+    callback(hash);
+  };
 }
 
 export default {
-  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash, dePath, formatTime, getRandom, loadFromBlob, shardUploadFiles
+  storage, toBety, getClientDeviceInfo, downloadFilePath, getFileHash,
+  dePath, formatTime, getRandom, loadFromBlob, toBuffer, getCompleteHash
 }
