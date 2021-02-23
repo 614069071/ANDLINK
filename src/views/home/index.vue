@@ -176,6 +176,48 @@ export default {
 		console.log('mounted');
 	},
 	methods: {
+		addUplaodedCache(title, hash, state = 0) {
+			// 添加上传中 state 0 上传中 1 上传失败
+			const uploadedCache = utils.storage.get('uploadedCache') || [];
+			const uploadedCacheItem = { title, hash, state };
+			const isExist = uploadedCache.some((e, i) => {
+				if (e.hash === hash) {
+					uploadedCache.splice(i, uploadedCacheItem);
+				}
+			});
+
+			!isExist && uploadedCache.unshift(uploadedCacheItem);
+			utils.storage.set('uploadedCache', uploadedCache);
+
+			this.$bus.$emit('uploadCache');
+		},
+		delUplaodedCache(hash) {
+			// 删除上传中
+			const uploadedCache = utils.storage.get('uploadedCache') || [];
+
+			uploadedCache.forEach((e, i) => {
+				if (e.hash === hash) {
+					uploadedCache.splice(i, 1);
+				}
+			});
+
+			utils.storage.set('uploadedCache', uploadedCache);
+			this.$bus.$emit('uploadCache');
+		},
+		// 完成上传记录
+		addUplaodFinishCache(res) {
+			const uploadCacheList = utils.storage.get('uploadCacheList') || [];
+			const data = {
+				time: utils.formatTime(res.create_time),
+				size: res.bytes,
+				path: res.path,
+				uuid: res.uuid,
+			};
+
+			uploadCacheList.unshift(data);
+
+			utils.storage.set('uploadCacheList', uploadCacheList);
+		},
 		// hejia sdk 获取设备绑定信息
 		hejiaReady(callback) {
 			window.Hejia.ready(function () {
@@ -383,6 +425,8 @@ export default {
 						// 磁盘已有
 						self.getFileList(item);
 					} else if (res.code == 2022) {
+						// 添加上传中记录
+						self.addUplaodedCache(file.name, simple_hash);
 						// 断点续传
 						if (file.size <= 2097152) {
 							// 2 *1024 *1024  小于2MB
@@ -416,23 +460,15 @@ export default {
 										.then((res) => {
 											if (res.code == 0) {
 												self.getFileList(item);
-
-												// 上传完成记录列表
-												const uploadCacheList =
-													utils.storage.get('uploadCacheList') || [];
-												const data = {
-													time: utils.formatTime(res.create_time),
-													size: res.bytes,
-													path: res.path,
-													uuid: res.uuid,
-												};
-												uploadCacheList.unshift(data);
-
-												console.log('uploadCacheList', uploadCacheList);
-												utils.storage.set('uploadCacheList', uploadCacheList);
+												// 删除上传中记录列表
+												self.delUplaodedCache(simple_hash);
+												// 添加完成后记录
+												self.addUplaodFinishCache(res);
 											}
 										})
 										.catch((err) => {
+											// 上传失败
+											self.addUplaodedCache(file.name, simple_hash, 1);
 											console.log(err);
 										});
 								})
@@ -441,7 +477,7 @@ export default {
 								});
 						} else {
 							// 超过2M启用分片上传
-							this.shardUploadFiles(file, static_params);
+							self.shardUploadFiles(file, static_params);
 						}
 					} else if (res.code == 2008) {
 						// 简单hash无效
@@ -499,22 +535,14 @@ export default {
 													path: breadItem.path,
 												};
 
-												const uploadCacheList =
-													utils.storage.get('uploadCacheList') || [];
-												const data = {
-													time: utils.formatTime(res.create_time),
-													size: res.bytes,
-													path: res.path,
-													uuid: res.uuid,
-												};
-												uploadCacheList.push(data);
-
-												console.log('uploadCacheList', uploadCacheList);
-												utils.storage.set('uploadCacheList', uploadCacheList);
+												// 上传完成
+												self.addUplaodFinishCache(res);
+												self.delUplaodedCache(hash);
 
 												self.getFileList(list_params);
 											})
 											.catch((err) => {
+												self.addUplaodedCache(file.name, simple_hash, 1);
 												console.log(err);
 											});
 									});

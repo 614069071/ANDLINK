@@ -4,6 +4,8 @@ import router from './router'
 import fetch from './fetch';
 import utils from './utils';
 
+Vue.prototype.$bus = new Vue;
+
 Vue.prototype.$axios = fetch;
 
 import './styles/base.css';

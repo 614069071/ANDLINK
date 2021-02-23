@@ -17,16 +17,18 @@
 
 			<div class="file-list-wrapper" v-show="uploadVisible">
 				<ul>
-					<li class="file-item-wrapper" v-for="item in 0" :key="item  + Math.random()">
+					<li class="file-item-wrapper" v-for="(item,index) in uploadedList" :key="item.hash">
 						<div class="file-info">
 							<div class="file-info-img">
-								<img src="../assets/logo.png" alt="" />
+								<img src="../assets/other.png" alt="" />
 							</div>
 
 							<div class="file-info-main">
-								<p class="file-info-title ellipsis">test.jpg</p>
-								<p class="file-info-des"><span>4.08KB</span>2021-02-0417:34:50<span></span></p>
+								<p class="file-info-title ellipsis">{{item.title}}</p>
+								<p class="file-info-des">{{item.state ? '上传失败':'上传中...'}}</p>
 							</div>
+
+							<div class="file-control" @click="deleteUplaodedHistory(index)">删除</div>
 						</div>
 					</li>
 				</ul>
@@ -67,22 +69,42 @@ export default {
 			uploadVisible: true,
 			downloadVisible: true,
 			uploadList: [],
+			uploadedList: [],
 		};
 	},
 	watch: {
 		$route: {
 			handler() {
-				const uploadCacheList = utils.storage.get('uploadCacheList') || [];
-				this.uploadList = uploadCacheList;
+				this.updateUploadCache();
 				console.log('$route');
 			},
 			immediate: true,
 		},
 	},
+	mounted() {
+		this.$bus.$on('uploadCache', () => {
+			// 更新列表
+			this.updateUploadCache();
+		});
+	},
 	methods: {
+		updateUploadCache() {
+			const uploadedCache = utils.storage.get('uploadedCache') || [];
+			const uploadCacheList = utils.storage.get('uploadCacheList') || [];
+			this.uploadedList = uploadedCache;
+			this.uploadList = uploadCacheList;
+		},
 		deleteAllHistory() {
 			utils.storage.set('uploadCacheList', []);
+			utils.storage.set('uploadedCache', []);
 			this.uploadList = [];
+			this.uploadedList = [];
+		},
+		deleteUplaodedHistory(i) {
+			const uploadedCache = utils.storage.get('uploadedCache') || [];
+			uploadedCache.splice(i, 1);
+			utils.storage.set('uploadedCache', uploadedCache);
+			this.uploadedList = uploadedCache;
 		},
 		deleteHistory(i) {
 			const uploadCacheList = utils.storage.get('uploadCacheList') || [];
