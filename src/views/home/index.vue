@@ -423,6 +423,7 @@ export default {
 					console.log(res, 'quickUploadFile');
 					if (res.code == 0) {
 						// 磁盘已有
+						self.addUplaodFinishCache(res);
 						self.getFileList(item);
 					} else if (res.code == 2022) {
 						// 添加上传中记录
