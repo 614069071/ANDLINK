@@ -271,7 +271,7 @@ export default {
 													path: res.path,
 													uuid: res.uuid,
 												};
-												uploadCacheList.push(data);
+												uploadCacheList.unshift(data);
 
 												console.log('uploadCacheList', uploadCacheList);
 												utils.storage.set('uploadCacheList', uploadCacheList);
