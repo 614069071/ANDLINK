@@ -2,7 +2,7 @@
 	<div class="home-view-wrapper">
 		<header class="header-wrapper">
 			<div class="header-left">
-				<div class="header-device ellipsis">设备名设备名设备名设备名设备名设备名</div>
+				<div class="header-device ellipsis">{{deviceName}}</div>
 			</div>
 			<div class="header-center">我的云盘</div>
 			<div class="header-right">
@@ -144,6 +144,7 @@ export default {
 	name: 'Home',
 	data() {
 		return {
+			deviceName: '...',
 			isData: false,
 			checklist: [],
 			filelist: [],
@@ -158,10 +159,16 @@ export default {
 		};
 	},
 	created() {
+		// 测试账号
 		const phone = '18927472679';
-		const pinCode = '99999999999'; //99999999999 22222222222 44444444444
+		//99999999999 22222222222 44444444444
+		const pinCode = '99999999999';
 
 		this.getDeviceInfo(pinCode, phone);
+
+		// this.hejiaReady((phone, pinCode) => {
+		// 	this.getDeviceInfo(pinCode, phone);
+		// });
 
 		// console.log(window.Hejia, 'Hejia sdk');
 	},
@@ -169,14 +176,163 @@ export default {
 		console.log('mounted');
 	},
 	methods: {
+		// hejia sdk 获取设备绑定信息
+		hejiaReady(callback) {
+			window.Hejia.ready(function () {
+				// 页面加载完成后要立即调用Hejia全局对象执行的代码逻辑写这里
+				const pramas = { paramName: ['devicePin'] };
+				window.Hejia.getCurrentParam(
+					pramas,
+					(res) => {
+						console.log('getCurrentParam', res);
+						const [{ value = '' }] = res.parameters || [];
+
+						if (!value) return;
+
+						window.Hejia.getPhoneNumber(
+							(phone) => {
+								console.log('getPhoneNumber', phone);
+								callback && callback(phone, value);
+							},
+							(err) => {
+								console.log('getPhoneNumber', err);
+							}
+						);
+					},
+					(err) => {
+						console.log('getCurrentParam', err);
+					}
+				);
+			});
+		},
+		// 获取设备信息
+		getDeviceInfo(code, phone) {
+			// 校验手机号
+			this.$axios
+				.checkPhoneInfo(code, phone)
+				.then((phone_res) => {
+					const { code, device = {}, cookie } = phone_res;
+					const { pin, proxy, bar_code, sn } = device;
+					this.deviceName = sn;
+
+					utils.storage.set('bar_code', bar_code);
+
+					if (code == 0 || code == 5018) {
+						const pin_proxy = `http://${pin}.${proxy}`;
+
+						utils.storage.set('pin_proxy', pin_proxy);
+
+						// 获取token
+						this.$axios
+							.getToken(pin_proxy, cookie)
+							.then((token_res) => {
+								utils.storage.set('access_token', token_res.access_token);
+								if (code == 0) {
+									this.getDiskData();
+								} else if (code == 5018) {
+									// 普通用户绑定
+									phone_res.is_bind_admin &&
+										this.$axios
+											.ordinaryUserBinding(phone_res.id, bar_code)
+											.then((bind_res) => {
+												console.log(bind_res);
+												// 绑定设备
+												!bind_res.code &&
+													this.$axios
+														.bindDevice(pin_proxy, phone_res.id, bar_code)
+														.then((device_res) => {
+															// console.log(device_res);
+															if (device_res.code == 0) {
+																this.getDiskData();
+															} else if (device_res.code == 5006) {
+																this.$axios.bindDevice(
+																	pin_proxy,
+																	phone_res.id,
+																	bar_code
+																);
+															} else {
+																console.log(device_res.code);
+															}
+														})
+														.catch((err) => {
+															console.log(err);
+														});
+											})
+											.catch((err) => {
+												console.log(err);
+											});
+								} else {
+									console.log(token_res.code);
+								}
+							})
+							.catch((err) => {
+								console.log(err);
+							});
+					}
+				})
+				.catch((err) => {
+					console.log(err);
+				});
+		},
+		// 获取磁盘信息
+		getDiskData() {
+			this.resetInfo();
+			const pin_proxy = utils.storage.get('pin_proxy');
+			const access_token = utils.storage.get('access_token');
+			this.$axios.getDiskData(pin_proxy, access_token).then((res) => {
+				const list = res.disks || [];
+				const arr = list.filter((e) => e.type === 'data');
+				this.filelist = arr || [];
+				// 渲染页面
+				console.log('getDiskData', res);
+			});
+		},
+		// 获取文件列表
+		getFileList(item, callback) {
+			this.resetInfo();
+
+			console.log(item, 'item');
+			const { uuid, path = '/' } = item;
+			const pin_proxy = utils.storage.get('pin_proxy');
+			const access_token = utils.storage.get('access_token');
+			const params = { access_token, uuid, path };
+
+			this.$axios
+				.getFileList(pin_proxy, params)
+				.then((res) => {
+					this.filelist = res.contents;
+					callback && callback();
+				})
+				.catch((err) => {
+					console.log(err);
+				});
+		},
+		// 重置
 		resetInfo() {
 			this.checklist = [];
 		},
+		// 导航
 		addBread(item) {
 			const crumb = { uuid: item.uuid, path: item.path, name: item.name };
 			this.breadcrumbList.push(crumb);
 		},
-		// 添加导航
+		// 面包屑导航
+		crumbsChange(item, index) {
+			if (this.breadcrumbList.length === index + 1) return;
+			this.breadcrumbList.splice(index + 1);
+			console.log(this.breadcrumbList, 'arr');
+
+			if (!index) {
+				this.isData = false;
+			}
+
+			if (item.uuid) {
+				this.getFileList(item);
+			} else {
+				this.getDiskData();
+			}
+		},
+		// 文件夹点击
 		folderClick(item) {
 			const { uuid, path = '/', name = path.slice(1) || '' } = item;
 			const crumb = { uuid, path, name };
@@ -214,13 +370,13 @@ export default {
 
 			utils.getCompleteHash(file, function (simple_hash) {
 				console.log(simple_hash, 'simple_hash');
-				// 检测hash
 				const quick_parmas = {
 					uuid: item.uuid,
 					path: filePath,
 					hash: simple_hash,
 				};
 
+				// 检测hash
 				self.quickUploadFile(quick_parmas, (res) => {
 					console.log(res, 'quickUploadFile');
 					if (res.code == 0) {
@@ -228,14 +384,13 @@ export default {
 						self.getFileList(item);
 					} else if (res.code == 2022) {
 						// 断点续传
-						if (file.size <= 2 * 1024 * 1024) {
+						if (file.size <= 2097152) {
+							// 2 *1024 *1024  小于2MB
 							const formData = new FormData();
-							formData.append('file', file);
+							const merge = { simple_hash, offset: 0 };
+							const params = Object.assign({}, static_params, merge);
 
-							const params = Object.assign({}, static_params, {
-								simple_hash,
-								offset: 0,
-							});
+							formData.append('file', file);
 
 							// 上传文件
 							self.$axios
@@ -290,6 +445,7 @@ export default {
 						}
 					} else if (res.code == 2008) {
 						// 简单hash无效
+						console.log('无效的hash');
 					}
 				});
 			});
@@ -390,151 +546,6 @@ export default {
 					callback && callback(err);
 					console.log(err);
 				});
-		},
-		hejiaReady(callback) {
-			window.Hejia.ready(function () {
-				// 页面加载完成后要立即调用Hejia全局对象执行的代码逻辑写这里
-				const pramas = { paramName: ['devicePin'] };
-				window.Hejia.getCurrentParam(
-					pramas,
-					(res) => {
-						console.log('getCurrentParam', res);
-						const { value } = res.parameters[0];
-
-						if (value) {
-							window.Hejia.getPhoneNumber(
-								(res) => {
-									console.log('getPhoneNumber', res);
-									callback && callback(value, res);
-								},
-								(err) => {
-									console.log('getPhoneNumber', err);
-								}
-							);
-						}
-					},
-					(err) => {
-						console.log('getCurrentParam', err);
-					}
-				);
-			});
-		},
-		getDeviceInfo(code, phone) {
-			// 校验手机号
-			this.$axios
-				.checkPhoneInfo(code, phone)
-				.then((phone_res) => {
-					const { code, device = {}, cookie } = phone_res;
-					const { pin, proxy, bar_code } = device;
-
-					utils.storage.set('bar_code', bar_code);
-
-					if (code == 0 || code == 5018) {
-						const pin_proxy = `http://${pin}.${proxy}`;
-
-						utils.storage.set('pin_proxy', pin_proxy);
-
-						// 获取token
-						this.$axios
-							.getToken(pin_proxy, cookie)
-							.then((token_res) => {
-								utils.storage.set('access_token', token_res.access_token);
-								if (code == 0) {
-									this.getDiskData();
-								} else if (code == 5018) {
-									// 普通用户绑定
-									phone_res.is_bind_admin &&
-										this.$axios
-											.ordinaryUserBinding(phone_res.id, bar_code)
-											.then((bind_res) => {
-												console.log(bind_res);
-												// 绑定设备
-												!bind_res.code &&
-													this.$axios
-														.bindDevice(pin_proxy, phone_res.id, bar_code)
-														.then((device_res) => {
-															// console.log(device_res);
-															if (device_res.code == 0) {
-																this.getDiskData();
-															} else if (device_res.code == 5006) {
-																this.$axios.bindDevice(
-																	pin_proxy,
-																	phone_res.id,
-																	bar_code
-																);
-															} else {
-																console.log(device_res.code);
-															}
-														})
-														.catch((err) => {
-															console.log(err);
-														});
-											})
-											.catch((err) => {
-												console.log(err);
-											});
-								} else {
-									console.log(token_res.code);
-								}
-							})
-							.catch((err) => {
-								console.log(err);
-							});
-					}
-				})
-				.catch((err) => {
-					console.log(err);
-				});
-		},
-		// 获取磁盘信息
-		getDiskData() {
-			this.resetInfo();
-			const pin_proxy = utils.storage.get('pin_proxy');
-			const access_token = utils.storage.get('access_token');
-			this.$axios.getDiskData(pin_proxy, access_token).then((res) => {
-				const list = res.disks || [];
-				const arr = list.filter((e) => e.type === 'data');
-				this.filelist = arr || [];
-				// 渲染页面
-				console.log('getDiskData', res);
-			});
-		},
-		// 获取文件列表
-		getFileList(item, callback) {
-			this.resetInfo();
-
-			console.log(item, 'item');
-			const { uuid, path = '/' } = item;
-			const pin_proxy = utils.storage.get('pin_proxy');
-			const access_token = utils.storage.get('access_token');
-			const params = { access_token, uuid, path };
-
-			this.$axios
-				.getFileList(pin_proxy, params)
-				.then((res) => {
-					this.filelist = res.contents;
-					callback && callback();
-				})
-				.catch((err) => {
-					console.log(err);
-				});
-		},
-		crumbsChange(item, index) {
-			if (this.breadcrumbList.length === index + 1) return;
-			this.breadcrumbList.splice(index + 1);
-			console.log(this.breadcrumbList, 'arr');
-
-			// this.breadcrumbList = arr;
-
-			if (!index) {
-				this.isData = false;
-			}
-
-			if (item.uuid) {
-				this.getFileList(item);
-			} else {
-				this.getDiskData();
-			}
 		},
 		//创建文件夹
 		createFolderCancel() {
