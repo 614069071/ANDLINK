@@ -6,6 +6,7 @@ axios.defaults.timeout = 30000;
 // }, err => Promise.reject(err));
 
 axios.interceptors.response.use(response => {
+  // console.log(response, 'response')
   if (response.data.code == 0) {
     return response.data;
   }

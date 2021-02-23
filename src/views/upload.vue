@@ -36,7 +36,7 @@
 
 			<div class="file-list-wrapper" v-show="downloadVisible">
 				<ul>
-					<li class="file-item-wrapper" v-for="(item,index) in uploadList" :key="item.img + Math.random()">
+					<li class="file-item-wrapper" v-for="(item,index) in uploadList" :key="`${item.path}${Math.random()}`">
 						<div class="file-info">
 							<div class="file-info-img">
 								<img :src="item | dePath" alt="" />
@@ -70,9 +70,13 @@ export default {
 		};
 	},
 	watch: {
-		$route() {
-			const uploadCacheList = utils.storage.get('uploadCacheList') || [];
-			this.uploadList = uploadCacheList;
+		$route: {
+			handler() {
+				const uploadCacheList = utils.storage.get('uploadCacheList') || [];
+				this.uploadList = uploadCacheList;
+				console.log('$route');
+			},
+			immediate: true,
 		},
 	},
 	methods: {

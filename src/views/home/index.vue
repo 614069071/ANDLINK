@@ -310,7 +310,6 @@ export default {
 							// 上传完成hash
 							if (count === pieces - 1) {
 								// 获取完整hash
-								console.log('上传完了');
 
 								utils.getCompleteHash(file, function (hash) {
 									const merge = { simple_hash: hash, hash };
@@ -319,7 +318,7 @@ export default {
 									self.$axios
 										.uploadHash(pin_proxy, params)
 										.then((res) => {
-											console.log(res);
+											console.log('上传完了', res);
 											const breadItem =
 												self.breadcrumbList[self.breadcrumbList.length - 1];
 											const list_params = {
@@ -327,6 +326,20 @@ export default {
 												uuid: static_params.uuid,
 												path: breadItem.path,
 											};
+
+											const uploadCacheList =
+												utils.storage.get('uploadCacheList') || [];
+											const data = {
+												time: utils.formatTime(res.create_time),
+												size: res.bytes,
+												path: res.path,
+												uuid: res.uuid,
+											};
+											uploadCacheList.push(data);
+
+											console.log('uploadCacheList', uploadCacheList);
+											utils.storage.set('uploadCacheList', uploadCacheList);
+
 											self.getFileList(list_params);
 										})
 										.catch((err) => {
