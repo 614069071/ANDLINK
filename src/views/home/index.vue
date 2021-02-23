@@ -159,16 +159,16 @@ export default {
 		};
 	},
 	created() {
-		// 测试账号
-		const phone = '18927472679';
-		//99999999999 22222222222 44444444444
-		const pinCode = '99999999999';
-
-		this.getDeviceInfo(pinCode, phone);
-
-		// this.hejiaReady((phone, pinCode) => {
-		// 	this.getDeviceInfo(pinCode, phone);
-		// });
+		if (process.env.NODE_ENV === 'development') {
+			// 测试账号
+			const phone = '18927472679';
+			const pinCode = '99999999999'; //99999999999 22222222222 44444444444
+			this.getDeviceInfo(pinCode, phone);
+		} else {
+			this.hejiaReady((phone, pinCode) => {
+				this.getDeviceInfo(pinCode, phone);
+			});
+		}
 
 		// console.log(window.Hejia, 'Hejia sdk');
 	},
@@ -204,7 +204,7 @@ export default {
 			utils.storage.set('uploadedCache', uploadedCache);
 			this.$bus.$emit('uploadCache');
 		},
-		// 完成上传记录
+		// 添加完成上传记录
 		addUplaodFinishCache(res) {
 			const uploadCacheList = utils.storage.get('uploadCacheList') || [];
 			const data = {
