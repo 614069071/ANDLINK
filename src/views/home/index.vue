@@ -474,6 +474,7 @@ export default {
 										});
 								})
 								.catch((err) => {
+									self.addUplaodedCache(file.name, simple_hash, 1);
 									console.log(err);
 								});
 						} else {
@@ -551,6 +552,7 @@ export default {
 							}
 						})
 						.catch((err) => {
+							self.addUplaodedCache(file.name, simple_hash, 1);
 							console.log(err);
 						});
 				});
