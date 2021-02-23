@@ -194,6 +194,7 @@ export default {
 			console.log(e);
 			const self = this;
 			const [file = null] = e.target.files;
+			if (!file) return;
 			const pin_proxy = utils.storage.get('pin_proxy');
 			const access_token = utils.storage.get('access_token');
 			const bar_code = utils.storage.get('bar_code');
@@ -211,70 +212,87 @@ export default {
 				device_info,
 			};
 
-			// 2MB 内文件上传
-			if (file.size <= 2 * 1024 * 1024) {
-				const formData = new FormData();
-				formData.append('file', file);
+			utils.getCompleteHash(file, function (simple_hash) {
+				console.log(simple_hash, 'simple_hash');
+				// 检测hash
+				const quick_parmas = {
+					uuid: item.uuid,
+					path: filePath,
+					hash: simple_hash,
+				};
 
-				utils.getFileHash(file, function (simple_hash) {
-					console.log(simple_hash, 'simple_hash');
-					const params = Object.assign({}, static_params, {
-						simple_hash,
-						offset: 0,
-					});
+				self.quickUploadFile(quick_parmas, (res) => {
+					console.log(res, 'quickUploadFile');
+					if (res.code == 0) {
+						// 磁盘已有
+						self.getFileList(item);
+					} else if (res.code == 2022) {
+						// 断点续传
+						if (file.size <= 2 * 1024 * 1024) {
+							const formData = new FormData();
+							formData.append('file', file);
 
-					// 上传文件
-					self.$axios
-						.uploadFile(pin_proxy, formData, params)
-						.then((res) => {
-							console.log(res, 'upload');
-
-							const params = {
-								access_token,
-								uuid: item.uuid,
-								path: filePath,
-								size: file.size,
-								hash: simple_hash,
+							const params = Object.assign({}, static_params, {
 								simple_hash,
-								device_flag: device_info,
-								device_info: device_info,
-								bar_code,
-							};
+								offset: 0,
+							});
 
-							// 上传hash
+							// 上传文件
 							self.$axios
-								.uploadHash(pin_proxy, params)
+								.uploadFile(pin_proxy, formData, params)
 								.then((res) => {
-									if (res.code == 0) {
-										self.getFileList(item);
+									console.log(res, 'upload');
 
-										// 上传完成记录列表
-										const uploadCacheList =
-											utils.storage.get('uploadCacheList') || [];
-										const data = {
-											time: utils.formatTime(res.create_time),
-											size: res.bytes,
-											path: res.path,
-											uuid: res.uuid,
-										};
-										uploadCacheList.push(data);
+									const params = {
+										access_token,
+										uuid: item.uuid,
+										path: filePath,
+										size: file.size,
+										hash: simple_hash,
+										simple_hash,
+										device_flag: device_info,
+										device_info: device_info,
+										bar_code,
+									};
 
-										console.log('uploadCacheList', uploadCacheList);
-										utils.storage.set('uploadCacheList', uploadCacheList);
-									}
+									// 上传hash
+									self.$axios
+										.uploadHash(pin_proxy, params)
+										.then((res) => {
+											if (res.code == 0) {
+												self.getFileList(item);
+
+												// 上传完成记录列表
+												const uploadCacheList =
+													utils.storage.get('uploadCacheList') || [];
+												const data = {
+													time: utils.formatTime(res.create_time),
+													size: res.bytes,
+													path: res.path,
+													uuid: res.uuid,
+												};
+												uploadCacheList.push(data);
+
+												console.log('uploadCacheList', uploadCacheList);
+												utils.storage.set('uploadCacheList', uploadCacheList);
+											}
+										})
+										.catch((err) => {
+											console.log(err);
+										});
 								})
 								.catch((err) => {
 									console.log(err);
 								});
-						})
-						.catch((err) => {
-							console.log(err);
-						});
+						} else {
+							// 超过2M启用分片上传
+							this.shardUploadFiles(file, static_params);
+						}
+					} else if (res.code == 2008) {
+						// 简单hash无效
+					}
 				});
-			} else {
-				// 超过2M启用分片上传
-				this.shardUploadFiles(file, static_params);
-			}
+			});
 		},
 		// 分片上传
 		shardUploadFiles(file, static_params) {
@@ -354,6 +372,24 @@ export default {
 			}
 
 			fileShardUploadFiles(buffer[0]);
+		},
+		// 秒传(检测hash)
+		quickUploadFile(item = { uuid: '', hash: '', path: '' }, callback) {
+			const pin_proxy = utils.storage.get('pin_proxy');
+			const access_token = utils.storage.get('access_token');
+			const device_info = utils.getClientDeviceInfo();
+			const merge = { access_token, device_info, over_write: 0 };
+			const params = Object.assign({}, merge, item);
+
+			this.$axios
+				.quickUploadFile(pin_proxy, params)
+				.then((res) => {
+					callback && callback(res);
+				})
+				.catch((err) => {
+					callback && callback(err);
+					console.log(err);
+				});
 		},
 		hejiaReady(callback) {
 			window.Hejia.ready(function () {

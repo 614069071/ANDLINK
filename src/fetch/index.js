@@ -88,8 +88,11 @@ export default {
     const url = pin_proxy + api.UPLOAD_FILE_BY_BLOCK_2_PRIVATE;
     return axios.post(url, file, { params });
   },
-  // 分片上传快速hash(检测hash)
-  fileShardUploadFileHash() {
+  // 秒传(检测hash)
+  quickUploadFile(pin_proxy, params) {
+    const url = pin_proxy + api.UPLOAD_FILE_BY_HASH_2_PRIVATE;
+
+    return axios.get(url, { params });
 
   }
 }
