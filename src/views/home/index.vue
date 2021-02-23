@@ -285,7 +285,7 @@ export default {
 			const pin_proxy = utils.storage.get('pin_proxy');
 			let offset = 0; //记录上一次偏移量
 
-			function fileShardUploadFiles(ufile) {
+			function fileShardUploadFiles(ufile, callback) {
 				//获取快速hash
 				utils.getFileHash(ufile, function (simple_hash) {
 					const params = Object.assign({}, static_params, {
@@ -303,48 +303,47 @@ export default {
 							count++;
 							offset = res.offset;
 							console.log(res);
-							if (count <= pieces - 1) {
+							callback && callback();
+							if (count < pieces - 1) {
 								fileShardUploadFiles(buffer[count]);
-							}
+							} else if (count === pieces - 1) {
+								fileShardUploadFiles(buffer[count], () => {
+									// 上传完成hash
+									utils.getCompleteHash(file, function (hash) {
+										const merge = { simple_hash: hash, hash };
+										const params = Object.assign({}, static_params, merge);
 
-							// 上传完成hash
-							if (count === pieces - 1) {
-								// 获取完整hash
+										self.$axios
+											.uploadHash(pin_proxy, params)
+											.then((res) => {
+												console.log('上传完了', res);
+												const breadItem =
+													self.breadcrumbList[self.breadcrumbList.length - 1];
+												const list_params = {
+													access_token: static_params.access_token,
+													uuid: static_params.uuid,
+													path: breadItem.path,
+												};
 
-								utils.getCompleteHash(file, function (hash) {
-									const merge = { simple_hash: hash, hash };
-									const params = Object.assign({}, static_params, merge);
+												const uploadCacheList =
+													utils.storage.get('uploadCacheList') || [];
+												const data = {
+													time: utils.formatTime(res.create_time),
+													size: res.bytes,
+													path: res.path,
+													uuid: res.uuid,
+												};
+												uploadCacheList.push(data);
 
-									self.$axios
-										.uploadHash(pin_proxy, params)
-										.then((res) => {
-											console.log('上传完了', res);
-											const breadItem =
-												self.breadcrumbList[self.breadcrumbList.length - 1];
-											const list_params = {
-												access_token: static_params.access_token,
-												uuid: static_params.uuid,
-												path: breadItem.path,
-											};
+												console.log('uploadCacheList', uploadCacheList);
+												utils.storage.set('uploadCacheList', uploadCacheList);
 
-											const uploadCacheList =
-												utils.storage.get('uploadCacheList') || [];
-											const data = {
-												time: utils.formatTime(res.create_time),
-												size: res.bytes,
-												path: res.path,
-												uuid: res.uuid,
-											};
-											uploadCacheList.push(data);
-
-											console.log('uploadCacheList', uploadCacheList);
-											utils.storage.set('uploadCacheList', uploadCacheList);
-
-											self.getFileList(list_params);
-										})
-										.catch((err) => {
-											console.log(err);
-										});
+												self.getFileList(list_params);
+											})
+											.catch((err) => {
+												console.log(err);
+											});
+									});
 								});
 							}
 						})
