@@ -254,8 +254,8 @@ export default {
 				.checkPhoneInfo(code, phone)
 				.then((phone_res) => {
 					const { code, device = {}, cookie } = phone_res;
-					const { pin, proxy, bar_code, sn } = device;
-					this.deviceName = sn;
+					const { pin, proxy, bar_code } = device;
+					this.deviceName = bar_code;
 
 					utils.storage.set('bar_code', bar_code);
 
