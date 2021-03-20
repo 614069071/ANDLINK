@@ -137,8 +137,10 @@
 </template>
 
 <script>
-import '../../utils/hejia.min';
+import '../../utils/hejia1.5.0';
 import utils from '../../utils';
+
+// console.log('window.Hejia.ready', window.Hejia.ready);
 
 export default {
 	name: 'Home',
@@ -161,8 +163,8 @@ export default {
 	created() {
 		if (process.env.NODE_ENV === 'development') {
 			// 测试账号
-			const phone = '18927472679';
-			const pinCode = '99999999999'; //99999999999 22222222222 44444444444
+			const phone = '13798468449'; //13798468449 18927472679
+			const pinCode = '20210209021'; //99999999999 22222222222 44444444444 33333333333 20210209021
 			this.getDeviceInfo(pinCode, phone);
 		} else {
 			this.hejiaReady((phone, pinCode) => {
@@ -272,8 +274,8 @@ export default {
 								if (code == 0) {
 									this.getDiskData();
 								} else if (code == 5018) {
-									// 普通用户绑定
-									phone_res.is_bind_admin &&
+									if (phone_res.is_bind_admin) {
+										// 普通用户绑定
 										this.$axios
 											.ordinaryUserBinding(phone_res.id, bar_code)
 											.then((bind_res) => {
@@ -283,17 +285,10 @@ export default {
 													this.$axios
 														.bindDevice(pin_proxy, phone_res.id, bar_code)
 														.then((device_res) => {
-															// console.log(device_res);
 															if (device_res.code == 0) {
 																this.getDiskData();
-															} else if (device_res.code == 5006) {
-																this.$axios.bindDevice(
-																	pin_proxy,
-																	phone_res.id,
-																	bar_code
-																);
 															} else {
-																console.log(device_res.code);
+																console.log(device_res);
 															}
 														})
 														.catch((err) => {
@@ -303,6 +298,20 @@ export default {
 											.catch((err) => {
 												console.log(err);
 											});
+									} else {
+										this.$axios
+											.bindDevice(pin_proxy, phone_res.id, bar_code)
+											.then((device_res) => {
+												if (device_res.code == 0) {
+													this.getDiskData();
+												} else {
+													console.log(device_res);
+												}
+											})
+											.catch((err) => {
+												console.log(err);
+											});
+									}
 								} else {
 									console.log(token_res.code);
 								}
