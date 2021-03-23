@@ -2,7 +2,7 @@ import axios from './axios';
 import api from './api';
 const IS_PHONE_BIND = 'http://rapi-hs-pdt.filelist.info/c/checkPhoneInfo';//http://rapi-hs-pdt.filelist.info/ //http://rapi.filedisk.info/c/checkPhoneInfo
 const NORMAL_USER_BIND =
-  'https://gr-share.com/c/normalUserBindDeviceH5';
+  'https://rapi-hs-pdt.filelist.info/c/normalUserBindDeviceH5';
 
 export default {
   checkPhoneInfo: (code, phone) => {
