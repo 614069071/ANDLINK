@@ -1,6 +1,12 @@
 import axios from './axios';
 import api from './api';
-const server_url = 'http://rapi-hs-pdt.filelist.info';//生产 http://rapi-hs-pdt.filelist.info //开发 http://rapi.filedisk.info
+const server = {
+  loca: 'http://192.168.8.160:8001/', //本地
+  deve: 'http://rapi.filedisk.info/', //开发 
+  prod: 'http://rapi-hs-pdt.filelist.info/',//生产
+  test: 'http://rapi-hs-test.filelist.info/', //测试
+};
+const server_url = server.test;
 const IS_PHONE_BIND = server_url + '/c/checkPhoneInfo';
 const NORMAL_USER_BIND = server_url + '/c/normalUserBindDeviceH5';
 
