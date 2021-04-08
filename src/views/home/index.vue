@@ -139,6 +139,7 @@
 <script>
 import '../../utils/hejia1.5.0';
 import utils from '../../utils';
+import Vconsole from 'vconsole';
 
 // console.log('window.Hejia.ready', window.Hejia.ready);
 
@@ -172,10 +173,12 @@ export default {
 			});
 		}
 
-		// console.log(window.Hejia, 'Hejia sdk');
+		console.log('Hejia sdk', window.Hejia);
 	},
 	mounted() {
 		console.log('mounted');
+
+		new Vconsole();
 	},
 	methods: {
 		addUplaodedCache(title, hash, state = 0) {
@@ -220,33 +223,49 @@ export default {
 
 			utils.storage.set('uploadCacheList', uploadCacheList);
 		},
-		// hejia sdk 获取设备绑定信息
-		hejiaReady(callback) {
-			window.Hejia.ready(function () {
-				// 页面加载完成后要立即调用Hejia全局对象执行的代码逻辑写这里
-				const pramas = { paramName: ['devicePin'] };
+		hejiaGetPin() {
+			const pramas = { paramName: ['devicePin'] };
+			return new Promise((resolve, reject) => {
 				window.Hejia.getCurrentParam(
 					pramas,
 					(res) => {
-						console.log('getCurrentParam', res);
-						const [{ value = '' }] = res.parameters || [];
-
-						if (!value) return;
-
-						window.Hejia.getPhoneNumber(
-							(phone) => {
-								console.log('getPhoneNumber', phone);
-								callback && callback(phone, value);
-							},
-							(err) => {
-								console.log('getPhoneNumber', err);
-							}
-						);
+						const [{ value = '' }] = res.parameters;
+						console.log('getCurrentParam success devicePin', value);
+						resolve(value);
 					},
 					(err) => {
-						console.log('getCurrentParam', err);
+						console.log('getCurrentParam error', err);
+						reject(err);
 					}
 				);
+			});
+		},
+		hejiaGetPhone() {
+			return new Promise((resolve, reject) => {
+				window.Hejia.getPhoneNumber(
+					(phone) => {
+						console.log('getPhoneNumber', phone);
+						resolve(phone);
+					},
+					(err) => {
+						console.log('getPhoneNumber', err);
+						reject(err);
+					}
+				);
+			});
+		},
+		// hejia sdk 获取设备绑定信息
+		hejiaReady(callback) {
+			window.Hejia.ready(() => {
+				Promise.all([this.hejiaGetPhone(), this.hejiaGetPin()])
+					.then((res) => {
+						console.log('Promise.all suc', res);
+						const [phone, pin] = res;
+						callback && callback(phone, pin);
+					})
+					.catch((err) => {
+						console.log('Promise.all err', err);
+					});
 			});
 		},
 		// 获取设备信息
