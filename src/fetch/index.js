@@ -20,8 +20,6 @@ export default {
       client_secret: 'GxsxayamApUSwTq9'
     };
 
-    console.log(123)
-
     return axios.get(pin_proxy + api.GET_TOKEN, { params })
   },
   getDiskData: (pin_proxy, access_token) => {
