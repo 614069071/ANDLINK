@@ -165,7 +165,7 @@ export default {
 		if (process.env.NODE_ENV === 'development') {
 			// 测试账号
 			const phone = '19865765350'; //13798468449 18927472679 15367239907 19865765350
-			const pinCode = '33333333333'; //99999999999 22222222222 44444444444 33333333333 20210209021
+			const pinCode = '33333333333'; //99999999999 22222222222 44444444444 33333333333 20210209021 66666666666
 			this.getDeviceInfo(pinCode, phone);
 		} else {
 			this.hejiaReady((phone, pinCode) => {
@@ -176,8 +176,6 @@ export default {
 		console.log('Hejia sdk', window.Hejia);
 	},
 	mounted() {
-		console.log('mounted');
-
 		new Vconsole();
 	},
 	methods: {
