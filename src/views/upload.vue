@@ -41,7 +41,8 @@
 					<li class="file-item-wrapper" v-for="(item,index) in uploadList" :key="`${item.path}${Math.random()}`">
 						<div class="file-info">
 							<div class="file-info-img">
-								<img :src="item | dePath" alt="" />
+								<!-- <img :src="item | dePath" alt="" /> -->
+								<img src="../assets/other.png" alt="" />
 							</div>
 
 							<div class="file-info-main">
