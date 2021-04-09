@@ -91,8 +91,8 @@ export default {
 		updateUploadCache() {
 			const uploadedCache = utils.storage.get('uploadedCache') || [];
 			const uploadCacheList = utils.storage.get('uploadCacheList') || [];
-			this.uploadedList = uploadedCache;
 			this.uploadList = uploadCacheList;
+			this.uploadedList = uploadedCache;
 		},
 		deleteAllHistory() {
 			utils.storage.set('uploadCacheList', []);
