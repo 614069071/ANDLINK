@@ -294,16 +294,13 @@ function loadFromBlob(file, success) {
       bs += String.fromCharCode(bytes[i]);
     }
     bytes = undefined;
-    //pt.result  - readonly so assign bs
     return bs;
   }
   loadOver = function () {
     setTimeout(function () {
-      //owner.trigger('load');
-      me.result = hashSha1.getHash('HEX').toUpperCase();
-      success(me.result);
+      var result = hashSha1.getHash('HEX');
+      success(result);
       loadNext = arrayBufferToStr = loadOver = file = hashSha1 = null;
-      // owner.trigger('complete');
     }, 50);
   }
   loadNext = function () {
@@ -323,7 +320,6 @@ function loadFromBlob(file, success) {
         end = currentChunk * (jumpFileSize + chunkSize); //快速hash只读取10K的数据
         start = end - chunkSize;
         if (end > file.size) {  //结束抽取
-          console.log('loadOver 111')
           loadOver();
           return;
         }
@@ -361,8 +357,6 @@ function loadFromBlob(file, success) {
         setTimeout(loadNext, 1);
       } else {
         loadOver();
-        console.log('loadOver 345')
-
       }
     };
   };

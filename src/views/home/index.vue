@@ -176,7 +176,7 @@ export default {
 		console.log('Hejia sdk', window.Hejia);
 	},
 	mounted() {
-		new Vconsole();
+		// new Vconsole();
 	},
 	methods: {
 		addUplaodedCache(title, hash, state = 0) {
@@ -426,18 +426,21 @@ export default {
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
 			const filePath = item.path + '/' + file.name;
 
-			const static_params = {
-				access_token,
-				uuid: item.uuid,
-				path: filePath,
-				device_flag: device_info,
-				size: file.size,
-				over_write: 1,
-				device_info,
-			};
+			//获取文件快速 hash
+			utils.loadFromBlob(file, (simple_hash) => {
+				const static_params = {
+					access_token,
+					uuid: item.uuid,
+					path: filePath,
+					device_flag: device_info,
+					size: file.size,
+					over_write: 1,
+					device_info,
+					simple_hash,
+				};
 
-			utils.getCompleteHash(file, function (simple_hash) {
-				console.log(simple_hash, 'simple_hash');
+				console.log('simple_hash', simple_hash);
+
 				const quick_parmas = {
 					uuid: item.uuid,
 					path: filePath,
@@ -516,6 +519,7 @@ export default {
 		},
 		// 分片上传
 		shardUploadFiles(file, static_params) {
+			console.log('static_params', static_params);
 			const self = this;
 			let count = 0;
 			const buffer = utils.toBuffer(file);
@@ -524,64 +528,60 @@ export default {
 			let offset = 0; //记录上一次偏移量
 
 			function fileShardUploadFiles(ufile, callback) {
-				//获取快速hash
-				utils.getFileHash(ufile, function (simple_hash) {
-					const params = Object.assign({}, static_params, {
-						simple_hash,
-						offset,
-						over_write: 1,
-					});
-					const formData = new FormData();
-					formData.append('files', ufile);
-
-					// 上传分片文件
-					self.$axios
-						.fileShardUploadFiles(pin_proxy, formData, params)
-						.then((res) => {
-							count++;
-							offset = res.offset;
-							console.log(res);
-							callback && callback();
-							if (count < pieces - 1) {
-								fileShardUploadFiles(buffer[count]);
-							} else if (count === pieces - 1) {
-								fileShardUploadFiles(buffer[count], () => {
-									// 上传完成hash
-									utils.getCompleteHash(file, function (hash) {
-										const merge = { simple_hash: hash, hash };
-										const params = Object.assign({}, static_params, merge);
-
-										self.$axios
-											.uploadHash(pin_proxy, params)
-											.then((res) => {
-												console.log('上传完了', res);
-												const breadItem =
-													self.breadcrumbList[self.breadcrumbList.length - 1];
-												const list_params = {
-													access_token: static_params.access_token,
-													uuid: static_params.uuid,
-													path: breadItem.path,
-												};
-
-												// 上传完成
-												self.addUplaodFinishCache(res);
-												self.delUplaodedCache(hash);
-
-												self.getFileList(list_params);
-											})
-											.catch((err) => {
-												self.addUplaodedCache(file.name, simple_hash, 1);
-												console.log(err);
-											});
-									});
-								});
-							}
-						})
-						.catch((err) => {
-							self.addUplaodedCache(file.name, simple_hash, 1);
-							console.log(err);
-						});
+				const params = Object.assign({}, static_params, {
+					offset,
+					over_write: 1,
 				});
+				const formData = new FormData();
+				formData.append('files', ufile);
+
+				// 上传分片文件
+				self.$axios
+					.fileShardUploadFiles(pin_proxy, formData, params)
+					.then((res) => {
+						count++;
+						offset = res.offset;
+						console.log(res);
+						callback && callback();
+						if (count < pieces - 1) {
+							fileShardUploadFiles(buffer[count]);
+						} else if (count === pieces - 1) {
+							fileShardUploadFiles(buffer[count], () => {
+								// 上传完成hash
+								utils.getFileHash(file, function (hash) {
+									const merge = { simple_hash: hash, hash };
+									const params = Object.assign({}, static_params, merge);
+
+									self.$axios
+										.uploadHash(pin_proxy, params)
+										.then((res) => {
+											console.log('上传完了', res);
+											const breadItem =
+												self.breadcrumbList[self.breadcrumbList.length - 1];
+											const list_params = {
+												access_token: static_params.access_token,
+												uuid: static_params.uuid,
+												path: breadItem.path,
+											};
+
+											// 上传完成
+											self.addUplaodFinishCache(res);
+											self.delUplaodedCache(hash);
+
+											self.getFileList(list_params);
+										})
+										.catch((err) => {
+											self.addUplaodedCache(file.name, simple_hash, 1);
+											console.log(err);
+										});
+								});
+							});
+						}
+					})
+					.catch((err) => {
+						self.addUplaodedCache(file.name, simple_hash, 1);
+						console.log(err);
+					});
 			}
 
 			fileShardUploadFiles(buffer[0]);
