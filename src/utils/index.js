@@ -264,7 +264,6 @@ function getFileJumpSize(fSize) {
 //获取文件的快速hash值
 function loadFromBlob(file, success) {
   var ONE_MEAG = 1024 * 1024,
-    // blob = file.getSource(),
     chunkSize = 2 * 1024 * 1024,
     chunks = Math.ceil(file.size / chunkSize),
     jumpFileSize = 0,
@@ -298,8 +297,8 @@ function loadFromBlob(file, success) {
   }
   loadOver = function () {
     setTimeout(function () {
-      var result = hashSha1.getHash('HEX');
-      success(result);
+      var nhahs = hashSha1.getHash('HEX');
+      success(nhahs);
       loadNext = arrayBufferToStr = loadOver = file = hashSha1 = null;
     }, 50);
   }

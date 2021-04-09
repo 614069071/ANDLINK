@@ -426,96 +426,188 @@ export default {
 			const item = this.breadcrumbList[this.breadcrumbList.length - 1];
 			const filePath = item.path + '/' + file.name;
 
-			//获取文件快速 hash
-			utils.loadFromBlob(file, (simple_hash) => {
-				const static_params = {
-					access_token,
-					uuid: item.uuid,
-					path: filePath,
-					device_flag: device_info,
-					size: file.size,
-					over_write: 1,
-					device_info,
-					simple_hash,
-				};
+			if (file.size <= 1024 * 1024 * 10) {
+				utils.getCompleteHash(file, (simple_hash) => {
+					const static_params = {
+						access_token,
+						uuid: item.uuid,
+						path: filePath,
+						device_flag: device_info,
+						size: file.size,
+						over_write: 1,
+						device_info,
+						simple_hash,
+					};
 
-				console.log('simple_hash', simple_hash);
+					console.log('simple_hash', simple_hash);
 
-				const quick_parmas = {
-					uuid: item.uuid,
-					path: filePath,
-					hash: simple_hash,
-				};
+					const quick_parmas = {
+						uuid: item.uuid,
+						path: filePath,
+						hash: simple_hash,
+					};
 
-				// 检测hash
-				self.quickUploadFile(quick_parmas, (res) => {
-					console.log(res, 'quickUploadFile');
-					if (res.code == 0) {
-						// 磁盘已有
-						self.addUplaodFinishCache(res);
-						self.getFileList(item);
-					} else if (res.code == 2022) {
-						// 添加上传中记录
-						self.addUplaodedCache(file.name, simple_hash);
-						// 断点续传
-						if (file.size <= 2097152) {
-							// 2 *1024 *1024  小于2MB
-							const formData = new FormData();
-							const merge = { simple_hash, offset: 0 };
-							const params = Object.assign({}, static_params, merge);
+					// 检测hash
+					self.quickUploadFile(quick_parmas, (res) => {
+						console.log(res, 'quickUploadFile');
+						if (res.code == 0) {
+							// 磁盘已有
+							self.addUplaodFinishCache(res);
+							self.getFileList(item);
+						} else if (res.code == 2022) {
+							// 添加上传中记录
+							self.addUplaodedCache(file.name, simple_hash);
+							// 断点续传
+							if (file.size <= 2097152) {
+								// 2 *1024 *1024  小于2MB
+								const formData = new FormData();
+								const merge = { simple_hash, offset: 0 };
+								const params = Object.assign({}, static_params, merge);
 
-							formData.append('file', file);
+								formData.append('file', file);
 
-							// 上传文件
-							self.$axios
-								.uploadFile(pin_proxy, formData, params)
-								.then((res) => {
-									console.log(res, 'upload');
+								// 上传文件
+								self.$axios
+									.uploadFile(pin_proxy, formData, params)
+									.then((res) => {
+										console.log(res, 'upload');
 
-									const params = {
-										access_token,
-										uuid: item.uuid,
-										path: filePath,
-										size: file.size,
-										hash: simple_hash,
-										simple_hash,
-										device_flag: device_info,
-										device_info: device_info,
-										bar_code,
-									};
+										const params = {
+											access_token,
+											uuid: item.uuid,
+											path: filePath,
+											size: file.size,
+											hash: simple_hash,
+											simple_hash,
+											device_flag: device_info,
+											device_info: device_info,
+											bar_code,
+										};
 
-									// 上传hash
-									self.$axios
-										.uploadHash(pin_proxy, params)
-										.then((res) => {
-											if (res.code == 0) {
-												self.getFileList(item);
-												// 删除上传中记录列表
-												self.delUplaodedCache(simple_hash);
-												// 添加完成后记录
-												self.addUplaodFinishCache(res);
-											}
-										})
-										.catch((err) => {
-											// 上传失败
-											self.addUplaodedCache(file.name, simple_hash, 1);
-											console.log(err);
-										});
-								})
-								.catch((err) => {
-									self.addUplaodedCache(file.name, simple_hash, 1);
-									console.log(err);
-								});
-						} else {
-							// 超过2M启用分片上传
-							self.shardUploadFiles(file, static_params);
+										// 上传hash
+										self.$axios
+											.uploadHash(pin_proxy, params)
+											.then((res) => {
+												if (res.code == 0) {
+													self.getFileList(item);
+													// 删除上传中记录列表
+													self.delUplaodedCache(simple_hash);
+													// 添加完成后记录
+													self.addUplaodFinishCache(res);
+												}
+											})
+											.catch((err) => {
+												// 上传失败
+												self.addUplaodedCache(file.name, simple_hash, 1);
+												console.log(err);
+											});
+									})
+									.catch((err) => {
+										self.addUplaodedCache(file.name, simple_hash, 1);
+										console.log(err);
+									});
+							} else {
+								// 超过2M启用分片上传
+								self.shardUploadFiles(file, static_params);
+							}
+						} else if (res.code == 2008) {
+							// 简单hash无效
+							console.log('无效的hash');
 						}
-					} else if (res.code == 2008) {
-						// 简单hash无效
-						console.log('无效的hash');
-					}
+					});
 				});
-			});
+			} else {
+				//获取文件快速 hash
+				utils.loadFromBlob(file, (simple_hash) => {
+					const static_params = {
+						access_token,
+						uuid: item.uuid,
+						path: filePath,
+						device_flag: device_info,
+						size: file.size,
+						over_write: 1,
+						device_info,
+						simple_hash,
+					};
+
+					console.log('simple_hash', simple_hash);
+
+					const quick_parmas = {
+						uuid: item.uuid,
+						path: filePath,
+						hash: simple_hash,
+					};
+
+					// 检测hash
+					self.quickUploadFile(quick_parmas, (res) => {
+						console.log(res, 'quickUploadFile');
+						if (res.code == 0) {
+							// 磁盘已有
+							self.addUplaodFinishCache(res);
+							self.getFileList(item);
+						} else if (res.code == 2022) {
+							// 添加上传中记录
+							self.addUplaodedCache(file.name, simple_hash);
+							// 断点续传
+							if (file.size <= 2097152) {
+								// 2 *1024 *1024  小于2MB
+								const formData = new FormData();
+								const merge = { offset: 0 };
+								const params = Object.assign({}, static_params, merge);
+
+								formData.append('file', file);
+
+								// 上传文件
+								self.$axios
+									.uploadFile(pin_proxy, formData, params)
+									.then((res) => {
+										// console.log(res, 'upload');
+
+										const params = {
+											access_token,
+											uuid: item.uuid,
+											path: filePath,
+											size: file.size,
+											hash: simple_hash,
+											simple_hash,
+											device_flag: device_info,
+											device_info: device_info,
+											bar_code,
+										};
+
+										// 上传hash
+										self.$axios
+											.uploadHash(pin_proxy, params)
+											.then((res) => {
+												if (res.code == 0) {
+													self.getFileList(item);
+													// 删除上传中记录列表
+													self.delUplaodedCache(simple_hash);
+													// 添加完成后记录
+													self.addUplaodFinishCache(res);
+												}
+											})
+											.catch((err) => {
+												// 上传失败
+												self.addUplaodedCache(file.name, simple_hash, 1);
+												console.log(err);
+											});
+									})
+									.catch((err) => {
+										self.addUplaodedCache(file.name, simple_hash, 1);
+										console.log(err);
+									});
+							} else {
+								// 超过2M启用分片上传
+								self.shardUploadFiles(file, static_params);
+							}
+						} else if (res.code == 2008) {
+							// 简单hash无效
+							console.log('无效的hash');
+						}
+					});
+				});
+			}
 		},
 		// 分片上传
 		shardUploadFiles(file, static_params) {
@@ -548,8 +640,9 @@ export default {
 						} else if (count === pieces - 1) {
 							fileShardUploadFiles(buffer[count], () => {
 								// 上传完成hash
-								utils.getFileHash(file, function (hash) {
-									const merge = { simple_hash: hash, hash };
+								utils.getCompleteHash(file, function (hash) {
+									console.log('完整hash', hash);
+									const merge = { hash };
 									const params = Object.assign({}, static_params, merge);
 
 									self.$axios
